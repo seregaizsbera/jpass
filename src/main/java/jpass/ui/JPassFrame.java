@@ -1,35 +1,6 @@
-/*
- * JPass
- *
- * Copyright (c) 2009-2017 Gabor Bata
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 package jpass.ui;
 
 import jpass.data.DataModel;
-import jpass.ui.action.Callback;
 import jpass.ui.action.CloseListener;
 import jpass.ui.action.ListListener;
 import jpass.ui.action.MenuActionType;
@@ -37,25 +8,13 @@ import jpass.ui.helper.EntryHelper;
 import jpass.ui.helper.FileHelper;
 import jpass.util.Configuration;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collections;
+import java.io.Serial;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.swing.DefaultListModel;
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JToolBar;
-import javax.swing.ListSelectionModel;
-import javax.swing.WindowConstants;
+import java.util.Objects;
 
 import static jpass.ui.MessageDialog.NO_OPTION;
 import static jpass.ui.MessageDialog.YES_NO_CANCEL_OPTION;
@@ -70,113 +29,95 @@ import static jpass.ui.MessageDialog.showQuestionMessage;
  *
  */
 public final class JPassFrame extends JFrame {
-
-    private static final Logger LOG = Logger.getLogger(JPassFrame.class.getName());
+    @Serial
     private static final long serialVersionUID = -4114209356464342368L;
-
-    private static volatile JPassFrame INSTANCE;
+    private static JPassFrame instance = null;
 
     public static final String PROGRAM_NAME = "JPass Password Manager";
     public static final String PROGRAM_VERSION = "0.1.16-SNAPSHOT";
 
     private final JPopupMenu popup;
-    private final JPanel topContainerPanel;
-    private final JMenuBar menuBar;
     private final SearchPanel searchPanel;
-    private final JMenu fileMenu;
-    private final JMenu editMenu;
-    private final JMenu toolsMenu;
-    private final JMenu helpMenu;
-    private final JToolBar toolBar;
-    private final JScrollPane scrollPane;
-    private final JList entryTitleList;
-    private final DefaultListModel entryTitleListModel;
+    private final JList<String> entryTitleList;
+    private final DefaultListModel<String> entryTitleListModel;
     private final DataModel model = DataModel.getInstance();
     private final StatusPanel statusPanel;
     private volatile boolean processing = false;
 
     private JPassFrame(String fileName) {
-        try {
-            setIconImage(getIcon("lock").getImage());
-        } catch (Exception e) {
-            LOG.log(Level.CONFIG, "Could not set application icon.", e);
-        }
+        setIconImage(Objects.requireNonNull(getIcon("lock")).getImage());
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.add(MenuActionType.NEW_FILE.getAction());
+        toolBar.add(MenuActionType.OPEN_FILE.getAction());
+        toolBar.add(MenuActionType.SAVE_FILE.getAction());
+        toolBar.addSeparator();
+        toolBar.add(MenuActionType.ADD_ENTRY.getAction());
+        toolBar.add(MenuActionType.EDIT_ENTRY.getAction());
+        toolBar.add(MenuActionType.DUPLICATE_ENTRY.getAction());
+        toolBar.add(MenuActionType.DELETE_ENTRY.getAction());
+        toolBar.addSeparator();
+        toolBar.add(MenuActionType.COPY_URL.getAction());
+        toolBar.add(MenuActionType.COPY_USER.getAction());
+        toolBar.add(MenuActionType.COPY_PASSWORD.getAction());
+        toolBar.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
+        toolBar.addSeparator();
+        toolBar.add(MenuActionType.ABOUT.getAction());
+        toolBar.add(MenuActionType.EXIT.getAction());
 
-        this.toolBar = new JToolBar();
-        this.toolBar.setFloatable(false);
-        this.toolBar.add(MenuActionType.NEW_FILE.getAction());
-        this.toolBar.add(MenuActionType.OPEN_FILE.getAction());
-        this.toolBar.add(MenuActionType.SAVE_FILE.getAction());
-        this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.ADD_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.EDIT_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.DUPLICATE_ENTRY.getAction());
-        this.toolBar.add(MenuActionType.DELETE_ENTRY.getAction());
-        this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.COPY_URL.getAction());
-        this.toolBar.add(MenuActionType.COPY_USER.getAction());
-        this.toolBar.add(MenuActionType.COPY_PASSWORD.getAction());
-        this.toolBar.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
-        this.toolBar.addSeparator();
-        this.toolBar.add(MenuActionType.ABOUT.getAction());
-        this.toolBar.add(MenuActionType.EXIT.getAction());
-
-        this.searchPanel = new SearchPanel(new Callback() {
-            @Override
-            public void call(boolean enabled) {
-                if (enabled) {
-                    refreshEntryTitleList(null);
-                }
+        this.searchPanel = new SearchPanel(enabled -> {
+            if (enabled) {
+                refreshEntryTitleList(null);
             }
         });
 
-        this.topContainerPanel = new JPanel(new BorderLayout());
-        this.topContainerPanel.add(this.toolBar, BorderLayout.NORTH);
-        this.topContainerPanel.add(this.searchPanel, BorderLayout.SOUTH);
+        JPanel topContainerPanel = new JPanel(new BorderLayout());
+        topContainerPanel.add(toolBar, BorderLayout.NORTH);
+        topContainerPanel.add(this.searchPanel, BorderLayout.SOUTH);
 
-        this.menuBar = new JMenuBar();
+        JMenuBar menuBar = new JMenuBar();
 
-        this.fileMenu = new JMenu("File");
-        this.fileMenu.setMnemonic(KeyEvent.VK_F);
-        this.fileMenu.add(MenuActionType.NEW_FILE.getAction());
-        this.fileMenu.add(MenuActionType.OPEN_FILE.getAction());
-        this.fileMenu.add(MenuActionType.SAVE_FILE.getAction());
-        this.fileMenu.add(MenuActionType.SAVE_AS_FILE.getAction());
-        this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.EXPORT_XML.getAction());
-        this.fileMenu.add(MenuActionType.IMPORT_XML.getAction());
-        this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.CHANGE_PASSWORD.getAction());
-        this.fileMenu.addSeparator();
-        this.fileMenu.add(MenuActionType.EXIT.getAction());
-        this.menuBar.add(this.fileMenu);
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        fileMenu.add(MenuActionType.NEW_FILE.getAction());
+        fileMenu.add(MenuActionType.OPEN_FILE.getAction());
+        fileMenu.add(MenuActionType.SAVE_FILE.getAction());
+        fileMenu.add(MenuActionType.SAVE_AS_FILE.getAction());
+        fileMenu.addSeparator();
+        fileMenu.add(MenuActionType.EXPORT_XML.getAction());
+        fileMenu.add(MenuActionType.IMPORT_XML.getAction());
+        fileMenu.addSeparator();
+        fileMenu.add(MenuActionType.CHANGE_PASSWORD.getAction());
+        fileMenu.addSeparator();
+        fileMenu.add(MenuActionType.EXIT.getAction());
+        menuBar.add(fileMenu);
 
-        this.editMenu = new JMenu("Edit");
-        this.editMenu.setMnemonic(KeyEvent.VK_E);
-        this.editMenu.add(MenuActionType.ADD_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.EDIT_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.DUPLICATE_ENTRY.getAction());
-        this.editMenu.add(MenuActionType.DELETE_ENTRY.getAction());
-        this.editMenu.addSeparator();
-        this.editMenu.add(MenuActionType.COPY_URL.getAction());
-        this.editMenu.add(MenuActionType.COPY_USER.getAction());
-        this.editMenu.add(MenuActionType.COPY_PASSWORD.getAction());
-        this.editMenu.addSeparator();
-        this.editMenu.add(MenuActionType.FIND_ENTRY.getAction());
-        this.menuBar.add(this.editMenu);
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setMnemonic(KeyEvent.VK_E);
+        editMenu.add(MenuActionType.ADD_ENTRY.getAction());
+        editMenu.add(MenuActionType.EDIT_ENTRY.getAction());
+        editMenu.add(MenuActionType.DUPLICATE_ENTRY.getAction());
+        editMenu.add(MenuActionType.DELETE_ENTRY.getAction());
+        editMenu.addSeparator();
+        editMenu.add(MenuActionType.COPY_URL.getAction());
+        editMenu.add(MenuActionType.COPY_USER.getAction());
+        editMenu.add(MenuActionType.COPY_PASSWORD.getAction());
+        editMenu.addSeparator();
+        editMenu.add(MenuActionType.FIND_ENTRY.getAction());
+        menuBar.add(editMenu);
 
-        this.toolsMenu = new JMenu("Tools");
-        this.toolsMenu.setMnemonic(KeyEvent.VK_T);
-        this.toolsMenu.add(MenuActionType.GENERATE_PASSWORD.getAction());
-        this.toolsMenu.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
-        this.menuBar.add(this.toolsMenu);
+        JMenu toolsMenu = new JMenu("Tools");
+        toolsMenu.setMnemonic(KeyEvent.VK_T);
+        toolsMenu.add(MenuActionType.GENERATE_PASSWORD.getAction());
+        toolsMenu.add(MenuActionType.CLEAR_CLIPBOARD.getAction());
+        menuBar.add(toolsMenu);
 
-        this.helpMenu = new JMenu("Help");
-        this.helpMenu.setMnemonic(KeyEvent.VK_H);
-        this.helpMenu.add(MenuActionType.LICENSE.getAction());
-        this.helpMenu.addSeparator();
-        this.helpMenu.add(MenuActionType.ABOUT.getAction());
-        this.menuBar.add(this.helpMenu);
+        JMenu helpMenu = new JMenu("Help");
+        helpMenu.setMnemonic(KeyEvent.VK_H);
+        helpMenu.add(MenuActionType.LICENSE.getAction());
+        helpMenu.addSeparator();
+        helpMenu.add(MenuActionType.ABOUT.getAction());
+        menuBar.add(helpMenu);
 
         this.popup = new JPopupMenu();
         this.popup.add(MenuActionType.ADD_ENTRY.getAction());
@@ -190,24 +131,24 @@ public final class JPassFrame extends JFrame {
         this.popup.addSeparator();
         this.popup.add(MenuActionType.FIND_ENTRY.getAction());
 
-        this.entryTitleListModel = new DefaultListModel();
-        this.entryTitleList = new JList(this.entryTitleListModel);
+        this.entryTitleListModel = new DefaultListModel<>();
+        this.entryTitleList = new JList<>(this.entryTitleListModel);
         this.entryTitleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.entryTitleList.addMouseListener(new ListListener());
-        this.entryTitleList.setCellRenderer(new IconedListCellRenderer());
+        this.entryTitleList.setCellRenderer(new DefaultListCellRenderer());
 
-        this.scrollPane = new JScrollPane(this.entryTitleList);
+        JScrollPane scrollPane = new JScrollPane(this.entryTitleList);
         MenuActionType.bindAllActions(this.entryTitleList);
 
         this.statusPanel = new StatusPanel();
 
         refreshAll();
 
-        getContentPane().add(this.topContainerPanel, BorderLayout.NORTH);
-        getContentPane().add(this.scrollPane, BorderLayout.CENTER);
+        getContentPane().add(topContainerPanel, BorderLayout.NORTH);
+        getContentPane().add(scrollPane, BorderLayout.CENTER);
         getContentPane().add(this.statusPanel, BorderLayout.SOUTH);
 
-        setJMenuBar(this.menuBar);
+        setJMenuBar(menuBar);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setSize(420, 400);
         setMinimumSize(new Dimension(420, 200));
@@ -218,6 +159,16 @@ public final class JPassFrame extends JFrame {
 
         // set focus to the list for easier keyboard navigation
         this.entryTitleList.requestFocusInWindow();
+
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Exit");
+        rootPane.getActionMap().put("Exit", new AbstractAction() {
+            @Serial
+            private static final long serialVersionUID = -923374154043418939L;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                exitFrame();
+            }
+        });
     }
 
     public static JPassFrame getInstance() {
@@ -225,14 +176,12 @@ public final class JPassFrame extends JFrame {
     }
 
     public static JPassFrame getInstance(String fileName) {
-        if (INSTANCE == null) {
-            synchronized (JPassFrame.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new JPassFrame(fileName);
-                }
+        synchronized (JPassFrame.class) {
+            if (instance == null) {
+                instance = new JPassFrame(fileName);
             }
         }
-        return INSTANCE;
+        return instance;
     }
 
     /**
@@ -240,7 +189,7 @@ public final class JPassFrame extends JFrame {
      *
      * @return entry title list
      */
-    public JList getEntryTitleList() {
+    public JList<String> getEntryTitleList() {
         return this.entryTitleList;
     }
 
@@ -278,7 +227,7 @@ public final class JPassFrame extends JFrame {
     public void refreshEntryTitleList(String selectTitle) {
         this.entryTitleListModel.clear();
         List<String> titles = this.model.getTitles();
-        Collections.sort(titles, String.CASE_INSENSITIVE_ORDER);
+        titles.sort(String.CASE_INSENSITIVE_ORDER);
 
         String searchCriteria = this.searchPanel.getSearchCriteria();
         for (String title : titles) {
@@ -310,10 +259,9 @@ public final class JPassFrame extends JFrame {
      * Exits the application.
      */
     public void exitFrame() {
-        if (Configuration.getInstance().is("clear.clipboard.on.exit.enabled", false)) {
+        if (Configuration.is("clear.clipboard.on.exit.enabled", false)) {
             EntryHelper.copyEntryField(this, null);
         }
-
         if (this.processing) {
             return;
         }
@@ -321,12 +269,9 @@ public final class JPassFrame extends JFrame {
             int option = showQuestionMessage(this,
                     "The current file has been modified.\nDo you want to save the changes before closing?", YES_NO_CANCEL_OPTION);
             if (option == YES_OPTION) {
-                FileHelper.saveFile(this, false, new Callback() {
-                    @Override
-                    public void call(boolean result) {
-                        if (result) {
-                            System.exit(0);
-                        }
+                FileHelper.saveFile(this, false, result -> {
+                    if (result) {
+                        System.exit(0);
                     }
                 });
                 return;

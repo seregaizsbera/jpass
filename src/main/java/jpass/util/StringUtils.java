@@ -49,7 +49,7 @@ public final class StringUtils {
      * @param in The String whose non-valid characters we want to remove.
      * @return The in String, stripped of non-valid characters.
      */
-    public static String stripNonValidXMLCharacters(final String in) {
+    public static String stripNonValidXMLCharacters(String in) {
         if (in == null || in.isEmpty()) {
             return in;
         }
@@ -57,10 +57,11 @@ public final class StringUtils {
         char current;
         for (int i = 0; i < in.length(); i++) {
             current = in.charAt(i);
-            if ((current == 0x9) || (current == 0xA) || (current == 0xD)
-                    || ((current >= 0x20) && (current <= 0xD7FF))
-                    || ((current >= 0xE000) && (current <= 0xFFFD))
-                    || ((current >= 0x10000) && (current <= 0x10FFFF))) {
+            if (current == 0x9
+                    || current == 0xA
+                    || current == 0xD
+                    || current >= 0x20 && current <= 0xD7FF
+                    || current >= 0xE000 && current <= 0xFFFD) {
                 out.append(current);
             } else {
                 out.append('?');
@@ -79,13 +80,5 @@ public final class StringUtils {
             result = text.substring(0, length) + "...";
         }
         return result;
-    }
-
-    public static String byteArrayToHex(byte[] array) {
-        StringBuilder sb = new StringBuilder(array.length * 2);
-        for (byte b : array) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 }

@@ -31,17 +31,19 @@ package jpass.ui.action;
 import javax.swing.KeyStroke;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.TextAction;
+import java.io.Serial;
 
 public abstract class TextComponentAction extends TextAction {
 
+    @Serial
     private static final long serialVersionUID = -2061559337477351379L;
 
-    public TextComponentAction(String text, KeyStroke accelerator, int mnemonic) {
+    protected TextComponentAction(String text, KeyStroke accelerator, int mnemonic) {
         super(text);
         if (accelerator != null) {
             putValue(ACCELERATOR_KEY, accelerator);
         }
-        putValue(MNEMONIC_KEY, Integer.valueOf(mnemonic));
+        putValue(MNEMONIC_KEY, mnemonic);
     }
 
     public abstract boolean isEnabled(JTextComponent component);

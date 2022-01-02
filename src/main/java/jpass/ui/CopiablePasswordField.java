@@ -29,16 +29,16 @@
 package jpass.ui;
 
 import javax.swing.JPasswordField;
+import java.io.Serial;
 
 /**
  * An extension of {@link JPasswordField} which holds an extra attribute which flags if the password
  * field content is allowed to copy to system clipboard.
  *
  * @author Gabor_Bata
- *
  */
 public class CopiablePasswordField extends JPasswordField {
-
+    @Serial
     private static final long serialVersionUID = 1205118236056025220L;
     private final boolean copyEnabled;
 

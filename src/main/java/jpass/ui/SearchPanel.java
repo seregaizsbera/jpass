@@ -28,9 +28,13 @@
  */
 package jpass.ui;
 
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static javax.swing.KeyStroke.getKeyStroke;
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Serial;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -45,10 +49,6 @@ import javax.swing.event.DocumentListener;
 
 import jpass.ui.action.Callback;
 
-import static javax.swing.KeyStroke.getKeyStroke;
-import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
-
 /**
  * Class for representing search panel. Search panel is hidden by default.
  *
@@ -56,7 +56,7 @@ import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
  *
  */
 public class SearchPanel extends JPanel implements ActionListener {
-
+    @Serial
     private static final long serialVersionUID = 5455248210301851210L;
 
     private static final String CLOSE_BUTTON_ACTION_COMMAND = "close_search_panel_button";
@@ -108,8 +108,8 @@ public class SearchPanel extends JPanel implements ActionListener {
         this.closeButton.addActionListener(this);
 
         Action closeAction = new AbstractAction() {
-            private static final long serialVersionUID = 2L;
-
+            @Serial
+            private static final long serialVersionUID = 4837266012228642645L;
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);

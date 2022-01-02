@@ -28,13 +28,15 @@
  */
 package jpass.ui.action;
 
+import java.io.Serializable;
+
 /**
  * Simple callback method interface.
  *
  * @author Gabor_Bata
  *
  */
-public interface Callback {
+public interface Callback extends Serializable {
 
     /**
      * Callback method.

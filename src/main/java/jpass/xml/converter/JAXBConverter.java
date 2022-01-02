@@ -28,8 +28,7 @@
  */
 package jpass.xml.converter;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -40,6 +39,10 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
 /**
  * Class for conversion between JAXB objects and streams representing XMLs.
@@ -49,7 +52,6 @@ import javax.xml.validation.SchemaFactory;
  * @param <T> the type of object to marshal/unmarshal
  */
 public class JAXBConverter<T> {
-
     private final Class<T> documentClass;
     private final Schema schema;
 
@@ -76,7 +78,7 @@ public class JAXBConverter<T> {
     }
 
     /**
-     * Unmarshals the given input stream to a JAXB generated class.
+     * Unmarshalls the given input stream to a JAXB generated class.
      *
      * @param inputStream the input stream
      * @return the JAXB generated object
@@ -106,9 +108,13 @@ public class JAXBConverter<T> {
             try {
                 Source source = new StreamSource(this.getClass().getClassLoader().getResourceAsStream(schemaLocation));
                 SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                sf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                sf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                sf.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                sf.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
                 ret = sf.newSchema(source);
-            } catch (Exception e) {
-                // silently discard any exception
+            } catch (SAXException e) {
+                throw new UncheckedIOException(new IOException(e));
             }
         }
         return ret;

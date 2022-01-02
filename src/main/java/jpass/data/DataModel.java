@@ -28,6 +28,8 @@
  */
 package jpass.data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,13 +42,13 @@ import jpass.xml.bind.Entry;
  * @author Gabor_Bata
  *
  */
-public class DataModel {
-
-    private static volatile DataModel INSTANCE;
-
+public class DataModel implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -6064912973494236527L;
+    private static final DataModel instance = new DataModel();
     private Entries entries = new Entries();
     private String fileName = null;
-    private transient byte[] password = null;
+    private transient char[] password = null;
     private boolean modified = false;
 
     private DataModel() {
@@ -59,14 +61,7 @@ public class DataModel {
      * @return instance of the DataModel
      */
     public static DataModel getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DataModel.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DataModel();
-                }
-            }
-        }
-        return INSTANCE;
+        return instance;
     }
 
     /**
@@ -123,11 +118,11 @@ public class DataModel {
         this.modified = modified;
     }
 
-    public byte[] getPassword() {
+    public char[] getPassword() {
         return this.password;
     }
 
-    public void setPassword(byte[] password) {
+    public void setPassword(char[] password) {
         this.password = password;
     }
 
@@ -147,7 +142,7 @@ public class DataModel {
      * @return list of entry titles
      */
     public List<String> getTitles() {
-        List<String> list = new ArrayList<String>(this.entries.getEntry().size());
+        List<String> list = new ArrayList<>(this.entries.getEntry().size());
         for (Entry entry : this.entries.getEntry()) {
             list.add(entry.getTitle());
         }

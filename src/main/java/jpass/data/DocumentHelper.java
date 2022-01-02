@@ -28,14 +28,15 @@
  */
 package jpass.data;
 
+import static jpass.util.StringUtils.stripString;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.security.GeneralSecurityException;
 
 import javax.xml.bind.JAXBException;
 
@@ -44,14 +45,13 @@ import jpass.crypt.io.CryptOutputStream;
 import jpass.xml.bind.Entries;
 import jpass.xml.converter.JAXBConverter;
 
-import static jpass.util.StringUtils.stripString;
-
 /**
  * Helper class for reading and writing (encrypted) XML documents.
  *
  * @author Gabor_Bata
  *
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class DocumentHelper {
 
     /**
@@ -62,12 +62,12 @@ public final class DocumentHelper {
     /**
      * Key for encryption.
      */
-    private final byte[] key;
+    private final char[] key;
 
     /**
      * Converter between JAXB objects and streams representing XMLs
      */
-    private static final JAXBConverter<Entries> CONVERTER = new JAXBConverter<Entries>(Entries.class,
+    private static final JAXBConverter<Entries> CONVERTER = new JAXBConverter<>(Entries.class,
             "resources/schemas/entries.xsd");
 
     /**
@@ -76,7 +76,7 @@ public final class DocumentHelper {
      * @param fileName file name
      * @param key key for encryption
      */
-    private DocumentHelper(final String fileName, final byte[] key) {
+    private DocumentHelper(String fileName, char[] key) {
         this.fileName = fileName;
         this.key = key;
     }
@@ -87,7 +87,7 @@ public final class DocumentHelper {
      * @param fileName file name
      * @return a new DocumentHelper object
      */
-    public static DocumentHelper newInstance(final String fileName) {
+    public static DocumentHelper newInstance(String fileName) {
         return new DocumentHelper(fileName, null);
     }
 
@@ -98,7 +98,7 @@ public final class DocumentHelper {
      * @param key key for encryption
      * @return a new DocumentHelper object
      */
-    public static DocumentHelper newInstance(final String fileName, final byte[] key) {
+    public static DocumentHelper newInstance(String fileName, char[] key) {
         return new DocumentHelper(fileName, key);
     }
 
@@ -110,25 +110,29 @@ public final class DocumentHelper {
      * @throws IOException when I/O error occurred
      * @throws DocumentProcessException when file format or password is incorrect
      */
-    public Entries readDocument() throws FileNotFoundException, IOException, DocumentProcessException {
-        InputStream inputStream = null;
+    public Entries readDocument() throws IOException, DocumentProcessException {
         Entries entries;
-        try {
-            if (this.key == null) {
-                inputStream = new FileInputStream(this.fileName);
-            } else {
-                inputStream = new GZIPInputStream(new CryptInputStream(new FileInputStream(this.fileName), this.key));
-            }
+        try (InputStream inputStream = makeInputStream()) {
             entries = CONVERTER.unmarshal(inputStream);
         } catch (JAXBException e) {
             throw new DocumentProcessException(stripString(e.getLinkedException() == null ? e.getMessage() : e
                     .getLinkedException().getMessage()));
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
         }
         return entries;
+    }
+
+    private InputStream makeInputStream() throws IOException {
+        InputStream inputStream;
+        if (this.key == null) {
+            inputStream = new FileInputStream(this.fileName);
+        } else {
+            try {
+                inputStream = new CryptInputStream(new FileInputStream(this.fileName), this.key);
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
+            }
+        }
+        return inputStream;
     }
 
     /**
@@ -139,23 +143,27 @@ public final class DocumentHelper {
      * @throws IOException when I/O error occurred
      */
     public void writeDocument(final Entries document) throws DocumentProcessException, IOException {
-        OutputStream outputStream = null;
-        try {
-            if (this.key == null) {
-                outputStream = new FileOutputStream(this.fileName);
-            } else {
-                outputStream = new GZIPOutputStream(new CryptOutputStream(new FileOutputStream(this.fileName), this.key));
-            }
+        try (OutputStream outputStream = makeOutputStream()) {
             CONVERTER.marshal(document, outputStream, this.key == null);
         } catch (JAXBException e) {
             throw new DocumentProcessException(stripString(e.getLinkedException() == null ? e.getMessage() : e
                     .getLinkedException().getMessage()));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new DocumentProcessException(e.getMessage());
-        } finally {
-            if (outputStream != null) {
-                outputStream.close();
+        }
+    }
+
+    private OutputStream makeOutputStream() throws IOException {
+        OutputStream outputStream;
+        if (this.key == null) {
+            outputStream = new FileOutputStream(this.fileName);
+        } else {
+            try {
+                outputStream = new CryptOutputStream(new FileOutputStream(this.fileName), this.key);
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
             }
         }
+        return outputStream;
     }
 }

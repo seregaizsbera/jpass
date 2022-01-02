@@ -31,6 +31,7 @@ package jpass.ui.action;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
+import java.io.Serial;
 
 /**
  * Class for handling menu actions.
@@ -39,7 +40,7 @@ import javax.swing.KeyStroke;
  *
  */
 public abstract class AbstractMenuAction extends AbstractAction {
-
+    @Serial
     private static final long serialVersionUID = 5470805628583386182L;
 
     /**
@@ -49,7 +50,7 @@ public abstract class AbstractMenuAction extends AbstractAction {
      * @param icon icon of action
      * @param accelerator accelerator key
      */
-    public AbstractMenuAction(String text, Icon icon, KeyStroke accelerator) {
+    AbstractMenuAction(String text, Icon icon, KeyStroke accelerator) {
         super(text, icon);
         putValue(SHORT_DESCRIPTION, text);
         if (accelerator != null) {

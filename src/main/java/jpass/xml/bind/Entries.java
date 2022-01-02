@@ -6,6 +6,8 @@
 //
 package jpass.xml.bind;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -38,15 +40,16 @@ import javax.xml.bind.annotation.XmlType;
     "entry"
 })
 @XmlRootElement(name = "entries")
-public class Entries {
-
-    protected List<Entry> entry;
+public class Entries implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -2331088030937733866L;
+    private List<Entry> entry;
 
     /**
      * Gets the value of the entry property.
      *
      * <p>
-     * This accessor method returns a reference to the live list, not a snapshot. Therefore any
+     * This accessor method returns a reference to the live list, not a snapshot. Therefore, any
      * modification you make to the returned list will be present inside the JAXB object. This is
      * why there is not a <CODE>set</CODE> method for the entry property.
      *
@@ -64,9 +67,8 @@ public class Entries {
      */
     public List<Entry> getEntry() {
         if (entry == null) {
-            entry = new ArrayList<Entry>();
+            entry = new ArrayList<>();
         }
         return this.entry;
     }
-
 }

@@ -28,30 +28,18 @@
  */
 package jpass.ui;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.util.Random;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
-import javax.swing.WindowConstants;
-import javax.swing.border.TitledBorder;
-
 import jpass.util.Configuration;
 import jpass.util.CryptUtils;
 import jpass.util.SpringUtilities;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.Serial;
+import java.util.Random;
 
 /**
  * Dialog for generating random passwords.
@@ -60,8 +48,12 @@ import jpass.util.SpringUtilities;
  *
  */
 public final class GeneratePasswordDialog extends JDialog implements ActionListener {
-
+    @Serial
     private static final long serialVersionUID = -1807066563698740446L;
+
+    public static final int DEFAULT_PASSWORD_LENGTH = 14;
+    public static final int MAX_GENERATED_PASSWORD_LENGTH = 64;
+    public static final int MIN_GENERATED_PASSWORD_LENGTH = 1;
 
     /**
      * Characters for custom symbols generation.
@@ -71,6 +63,7 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
     /**
      * Options for password generation.
      */
+    @SuppressWarnings("SpellCheckingInspection")
     private static final String[][] PASSWORD_OPTIONS = {
         {"Upper case letters (A-Z)", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"},
         {"Lower case letters (a-z)", "abcdefghijklmnopqrstuvwxyz"},
@@ -79,25 +72,11 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
 
     private JCheckBox[] checkBoxes;
     private JCheckBox customSymbolsCheck;
-
     private JTextField customSymbolsField;
     private JTextField passwordField;
-
-    private JLabel lengthLabel;
     private JSpinner lengthSpinner;
-
-    private JPanel lengthPanel;
-    private JPanel charactersPanel;
-    private JPanel passwordPanel;
-    private JPanel buttonPanel;
-
-    private JButton acceptButton;
-    private JButton cancelButton;
-    private JButton generateButton;
-
     private String generatedPassword;
-
-    private final Random random = CryptUtils.newRandomNumberGenerator();
+    private final Random random = CryptUtils.getRandomNumberGenerator();
 
     /**
      * Constructor of GeneratePasswordDialog.
@@ -127,89 +106,95 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
      * otherwise only a "Close" button
      *
      */
-    private void initDialog(final Component parent, final boolean showAcceptButton) {
+    private void initDialog(Component parent, boolean showAcceptButton) {
         setModal(true);
         setTitle("Generate Password");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.generatedPassword = null;
 
-        this.lengthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        this.lengthLabel = new JLabel("Password length:");
-        this.lengthPanel.add(this.lengthLabel);
+        JPanel lengthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel lengthLabel = new JLabel("Password length:");
+        lengthPanel.add(lengthLabel);
 
-        int passwordGenerationLength = Configuration.getInstance().getInteger("default.password.generation.length", 14);
-        if (passwordGenerationLength > 64) {
-            passwordGenerationLength = 64;
+        int passwordGenerationLength = Configuration.getInteger("default.password.generation.length", DEFAULT_PASSWORD_LENGTH);
+        if (passwordGenerationLength > MAX_GENERATED_PASSWORD_LENGTH) {
+            passwordGenerationLength = MAX_GENERATED_PASSWORD_LENGTH;
         }
-        if (passwordGenerationLength < 1) {
-            passwordGenerationLength = 1;
+        if (passwordGenerationLength < MIN_GENERATED_PASSWORD_LENGTH) {
+            passwordGenerationLength = MIN_GENERATED_PASSWORD_LENGTH;
         }
 
-        this.lengthSpinner = new JSpinner(new SpinnerNumberModel(passwordGenerationLength, 1, 64, 1));
-        this.lengthPanel.add(this.lengthSpinner);
+        this.lengthSpinner = new JSpinner(new SpinnerNumberModel(passwordGenerationLength, MIN_GENERATED_PASSWORD_LENGTH, passwordGenerationLength, 1));
+        lengthPanel.add(this.lengthSpinner);
 
-        this.charactersPanel = new JPanel();
-        this.charactersPanel.setBorder(new TitledBorder("Settings"));
-        this.charactersPanel.add(this.lengthPanel);
+        JPanel charactersPanel = new JPanel();
+        charactersPanel.setBorder(new TitledBorder("Settings"));
+        charactersPanel.add(lengthPanel);
         this.checkBoxes = new JCheckBox[PASSWORD_OPTIONS.length];
         for (int i = 0; i < PASSWORD_OPTIONS.length; i++) {
             this.checkBoxes[i] = new JCheckBox(PASSWORD_OPTIONS[i][0], true);
-            this.charactersPanel.add(this.checkBoxes[i]);
+            charactersPanel.add(this.checkBoxes[i]);
         }
         this.customSymbolsCheck = new JCheckBox("Custom symbols");
         this.customSymbolsCheck.setActionCommand("custom_symbols_check");
         this.customSymbolsCheck.addActionListener(this);
-        this.charactersPanel.add(this.customSymbolsCheck);
+        charactersPanel.add(this.customSymbolsCheck);
         this.customSymbolsField = TextComponentFactory.newTextField(SYMBOLS);
         this.customSymbolsField.setEditable(false);
-        this.charactersPanel.add(this.customSymbolsField);
+        charactersPanel.add(this.customSymbolsField);
 
-        this.charactersPanel.setLayout(new SpringLayout());
-        SpringUtilities.makeCompactGrid(this.charactersPanel, 6, 1, 5, 5, 5, 5);
+        charactersPanel.setLayout(new SpringLayout());
+        SpringUtilities.makeCompactGrid(charactersPanel, 6, 1, 5, 5, 5, 5);
 
-        this.passwordPanel = new JPanel(new BorderLayout());
-        this.passwordPanel.setBorder(new TitledBorder("Generated password"));
+        JPanel passwordPanel = new JPanel(new BorderLayout());
+        passwordPanel.setBorder(new TitledBorder("Generated password"));
 
         this.passwordField = TextComponentFactory.newTextField();
-        this.passwordPanel.add(this.passwordField, BorderLayout.NORTH);
-        this.generateButton = new JButton("Generate", MessageDialog.getIcon("generate"));
-        this.generateButton.setActionCommand("generate_button");
-        this.generateButton.addActionListener(this);
-        this.generateButton.setMnemonic(KeyEvent.VK_G);
+        passwordPanel.add(this.passwordField, BorderLayout.NORTH);
+        JButton generateButton = new JButton("Generate", MessageDialog.getIcon("generate"));
+        generateButton.setActionCommand("generate_button");
+        generateButton.addActionListener(this);
+        generateButton.setMnemonic(KeyEvent.VK_G);
         JPanel generateButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        generateButtonPanel.add(this.generateButton);
-        this.passwordPanel.add(generateButtonPanel, BorderLayout.SOUTH);
+        generateButtonPanel.add(generateButton);
+        passwordPanel.add(generateButtonPanel, BorderLayout.SOUTH);
 
-        this.buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
+        JButton cancelButton;
         if (showAcceptButton) {
-            this.acceptButton = new JButton("Accept", MessageDialog.getIcon("accept"));
-            this.acceptButton.setActionCommand("accept_button");
-            this.acceptButton.setMnemonic(KeyEvent.VK_A);
-            this.acceptButton.addActionListener(this);
-            this.buttonPanel.add(this.acceptButton);
+            JButton acceptButton = new JButton("Accept", MessageDialog.getIcon("accept"));
+            acceptButton.setActionCommand("accept_button");
+            acceptButton.setMnemonic(KeyEvent.VK_A);
+            acceptButton.addActionListener(this);
+            buttonPanel.add(acceptButton);
 
-            this.cancelButton = new JButton("Cancel", MessageDialog.getIcon("cancel"));
+            cancelButton = new JButton("Cancel", MessageDialog.getIcon("cancel"));
         } else {
-            this.cancelButton = new JButton("Close", MessageDialog.getIcon("close"));
+            cancelButton = new JButton("Close", MessageDialog.getIcon("close"));
         }
 
-        this.cancelButton.setActionCommand("cancel_button");
-        this.cancelButton.setMnemonic(KeyEvent.VK_C);
-        this.cancelButton.addActionListener(this);
-        this.buttonPanel.add(this.cancelButton);
+        cancelButton.setActionCommand("cancel_button");
+        cancelButton.setMnemonic(KeyEvent.VK_C);
+        cancelButton.addActionListener(this);
+        buttonPanel.add(cancelButton);
 
-        getContentPane().add(this.charactersPanel, BorderLayout.NORTH);
-        getContentPane().add(this.passwordPanel, BorderLayout.CENTER);
-        getContentPane().add(this.buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(charactersPanel, BorderLayout.NORTH);
+        getContentPane().add(passwordPanel, BorderLayout.CENTER);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        rootPane.getActionMap().put("Cancel", new CancelAction(this));
 
         setResizable(false);
         pack();
         setSize((int) (getWidth() * 1.5), getHeight());
         setLocationRelativeTo(parent);
-        setVisible(true);
     }
 
+    private static char randomCharacter(String set, Random random) {
+        return set.charAt(random.nextInt(set.length()));
+    }
     /**
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
@@ -219,27 +204,7 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
         if ("custom_symbols_check".equals(command)) {
             this.customSymbolsField.setEditable(((JCheckBox) e.getSource()).isSelected());
         } else if ("generate_button".equals(command)) {
-            String characterSet = "";
-            for (int i = 0; i < PASSWORD_OPTIONS.length; i++) {
-                if (this.checkBoxes[i].isSelected()) {
-                    characterSet += PASSWORD_OPTIONS[i][1];
-                }
-            }
-
-            if (this.customSymbolsCheck.isSelected()) {
-                characterSet += this.customSymbolsField.getText();
-            }
-
-            if (characterSet.isEmpty()) {
-                MessageDialog.showWarningMessage(this, "Cannot generate password.\nPlease select a character set.");
-                return;
-            }
-
-            StringBuilder generated = new StringBuilder();
-            int passwordLength = Integer.parseInt(String.valueOf(this.lengthSpinner.getValue()));
-            for (int i = 0; i < passwordLength; i++) {
-                generated.append(characterSet.charAt(this.random.nextInt(characterSet.length())));
-            }
+            StringBuilder generated = generatePassword();
             this.passwordField.setText(generated.toString());
         } else if ("accept_button".equals(command)) {
             this.generatedPassword = this.passwordField.getText();
@@ -251,6 +216,44 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
         } else if ("cancel_button".equals(command)) {
             dispose();
         }
+    }
+
+    private StringBuilder generatePassword() {
+        int index = 0;
+        StringBuilder generated = new StringBuilder();
+        StringBuilder characterSet = new StringBuilder();
+        for (int i = 0; i < PASSWORD_OPTIONS.length; i++) {
+            if (this.checkBoxes[i].isSelected()) {
+                characterSet.append(PASSWORD_OPTIONS[i][1]);
+            }
+            generated.append(randomCharacter(PASSWORD_OPTIONS[i][1], random));
+            index++;
+        }
+        if (this.customSymbolsCheck.isSelected()) {
+            characterSet.append(this.customSymbolsField.getText());
+            generated.append(randomCharacter(customSymbolsField.getText(), random));
+            index++;
+        }
+        if (characterSet.isEmpty()) {
+            MessageDialog.showWarningMessage(this, "Cannot generate password.\nPlease select a character set.");
+            return generated;
+        }
+        int passwordLength = Integer.parseInt(String.valueOf(this.lengthSpinner.getValue()));
+        var symbols = characterSet.toString();
+        for (int i = index; i < passwordLength; i++) {
+            generated.append(randomCharacter(symbols, random));
+        }
+        for (int i = 0; i < passwordLength; i++) {
+            int a = random.nextInt(passwordLength);
+            int b = random.nextInt(passwordLength);
+            if (a != b) {
+                char c1 = generated.charAt(a);
+                char c2 = generated.charAt(b);
+                generated.setCharAt(a, c2);
+                generated.setCharAt(b, c1);
+            }
+        }
+        return generated;
     }
 
     /**

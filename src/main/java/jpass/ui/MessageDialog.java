@@ -1,76 +1,28 @@
-/*
- * JPass
- *
- * Copyright (c) 2009-2017 Gabor Bata
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 package jpass.ui;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Frame;
+import jpass.util.SpringUtilities;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serial;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SpringLayout;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import javax.swing.border.EmptyBorder;
-
-import jpass.util.CryptUtils;
-import jpass.util.SpringUtilities;
-import jpass.util.StringUtils;
+import java.util.Objects;
 
 /**
  * Utility class for displaying message dialogs.
- *
- * @author Gabor_Bata
- *
  */
 public final class MessageDialog extends JDialog implements ActionListener {
-
-    private static final Logger LOG = Logger.getLogger(MessageDialog.class.getName());
+    @Serial
     private static final long serialVersionUID = -1860703845867414123L;
 
     public static final int DEFAULT_OPTION = -1;
@@ -105,29 +57,30 @@ public final class MessageDialog extends JDialog implements ActionListener {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         JButton defaultButton;
         switch (optionType) {
-            case YES_NO_OPTION:
+            case YES_NO_OPTION -> {
                 defaultButton = createButton("Yes", YES_OPTION, getIcon("accept"));
                 buttonPanel.add(defaultButton);
                 buttonPanel.add(createButton("No", NO_OPTION, getIcon("close")));
-                break;
-            case YES_NO_CANCEL_OPTION:
+            }
+            case YES_NO_CANCEL_OPTION -> {
                 defaultButton = createButton("Yes", YES_OPTION, getIcon("accept"));
                 buttonPanel.add(defaultButton);
                 buttonPanel.add(createButton("No", NO_OPTION, getIcon("close")));
                 buttonPanel.add(createButton("Cancel", CANCEL_OPTION, getIcon("cancel")));
-                break;
-            case OK_CANCEL_OPTION:
+            }
+            case OK_CANCEL_OPTION -> {
                 defaultButton = createButton("OK", OK_OPTION, getIcon("accept"));
                 buttonPanel.add(defaultButton);
                 buttonPanel.add(createButton("Cancel", CANCEL_OPTION, getIcon("cancel")));
-                break;
-            default:
+            }
+            default -> {
                 defaultButton = createButton("OK", OK_OPTION, getIcon("accept"));
                 buttonPanel.add(defaultButton);
-                break;
+            }
         }
-        getRootPane().setDefaultButton(defaultButton);
-
+        rootPane.setDefaultButton(defaultButton);
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        rootPane.getActionMap().put("Cancel", new CancelAction(this));
         JPanel mainPanel = new JPanel(new BorderLayout(5, 0));
 
         float widthMultiplier;
@@ -135,14 +88,14 @@ public final class MessageDialog extends JDialog implements ActionListener {
         if (message instanceof JScrollPane) {
             widthMultiplier = 1.0f;
             messagePanel.add((Component) message, BorderLayout.CENTER);
-        } else if (message instanceof Component) {
+        } else if (message instanceof Component component) {
             widthMultiplier = 1.5f;
-            messagePanel.add((Component) message, BorderLayout.NORTH);
+            messagePanel.add(component, BorderLayout.NORTH);
         } else {
             widthMultiplier = 1.0f;
             messagePanel.setBorder(new EmptyBorder(10, 0, 10, 10));
             messagePanel.add(new JLabel("<html>" + String.valueOf(message)
-                    .replaceAll("\\n", "<br />") + "</html>"), BorderLayout.CENTER);
+                    .replace("\\n", "<br />") + "</html>"), BorderLayout.CENTER);
         }
         mainPanel.add(messagePanel, BorderLayout.CENTER);
 
@@ -187,10 +140,10 @@ public final class MessageDialog extends JDialog implements ActionListener {
     private static int showMessageDialog(final Component parent, final Object message, final String title, ImageIcon icon, int optionType) {
         int ret = CLOSED_OPTION;
         MessageDialog dialog = null;
-        if (parent instanceof Frame) {
-            dialog = new MessageDialog((Frame) parent, message, title, icon, optionType);
-        } else if (parent instanceof Dialog) {
-            dialog = new MessageDialog((Dialog) parent, message, title, icon, optionType);
+        if (parent instanceof Frame frame) {
+            dialog = new MessageDialog(frame, message, title, icon, optionType);
+        } else if (parent instanceof Dialog parentDialog) {
+            dialog = new MessageDialog(parentDialog, message, title, icon, optionType);
         }
         if (dialog != null) {
             ret = dialog.getSelectedOption();
@@ -247,7 +200,7 @@ public final class MessageDialog extends JDialog implements ActionListener {
      * @param confirm password confirmation
      * @return the password
      */
-    public static byte[] showPasswordDialog(final Component parent, final boolean confirm) {
+    public static char[] showPasswordDialog(Component parent, boolean confirm) {
         JPanel panel = new JPanel();
         panel.add(new JLabel("Password:"));
         final JPasswordField password = TextComponentFactory.newPasswordField();
@@ -267,24 +220,16 @@ public final class MessageDialog extends JDialog implements ActionListener {
             if (option == OK_OPTION) {
                 if (password.getPassword().length == 0) {
                     showWarningMessage(parent, "Please enter a password.");
-                } else if (confirm && !Arrays.equals(password.getPassword(), repeat.getPassword())) {
+                } else if (repeat != null && !Arrays.equals(password.getPassword(), repeat.getPassword())) {
                     showWarningMessage(parent, "Password and repeated password are not identical.");
                 } else {
                     notCorrect = false;
                 }
             } else {
-                return null;
+                return new char[0];
             }
         }
-
-        byte[] passwordHash = null;
-        try {
-            passwordHash = CryptUtils.getPKCS5Sha256Hash(password.getPassword());
-        } catch (Exception e) {
-            showErrorMessage(parent,
-                    "Cannot generate password hash:\n" + StringUtils.stripString(e.getMessage()) + "\n\nOpening and saving files are not possible!");
-        }
-        return passwordHash;
+        return password.getPassword();
     }
 
     /**
@@ -294,11 +239,8 @@ public final class MessageDialog extends JDialog implements ActionListener {
      * @return ImageIcon object
      */
     public static ImageIcon getIcon(String name) {
-        try {
-            return new ImageIcon(MessageDialog.class.getClassLoader().getResource("resources/images/" + name + ".png"));
-        } catch (Exception e) {
-            return null;
-        }
+        var location = Objects.requireNonNull(MessageDialog.class.getClassLoader().getResource("resources/images/" + name + ".png"));
+        return new ImageIcon(location);
     }
 
     /**
@@ -306,24 +248,18 @@ public final class MessageDialog extends JDialog implements ActionListener {
      */
     private static String getResourceAsString(String name) {
         StringBuilder builder = new StringBuilder();
-        BufferedReader bufferedReader = null;
-        try {
-            InputStream is = MessageDialog.class.getClassLoader().getResourceAsStream("resources/" + name);
-            bufferedReader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                builder.append(line).append('\n');
+        try (InputStream is = MessageDialog.class.getClassLoader().getResourceAsStream("resources/" + name)) {
+            if (is == null) {
+                throw new IOException("Resource " + name + " not found");
             }
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, String.format("An error occurred during reading resource [%s]", name), e);
-        } finally {
-            try {
-                if (bufferedReader != null) {
-                    bufferedReader.close();
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    builder.append(line).append('\n');
                 }
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, String.format("An error occurred during closing reader for resource [%s]", name), e);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
         return builder.toString();
     }
@@ -345,4 +281,5 @@ public final class MessageDialog extends JDialog implements ActionListener {
         scrollPane.setPreferredSize(new Dimension(600, 400));
         showMessageDialog(parent, scrollPane, title, null, DEFAULT_OPTION);
     }
+
 }

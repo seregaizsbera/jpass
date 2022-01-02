@@ -1,32 +1,6 @@
-/*
- * JPass
- *
- * Copyright (c) 2009-2017 Gabor Bata
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 package jpass.ui;
+
+import static jpass.ui.helper.EntryHelper.copyEntryField;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -34,9 +8,11 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
+import java.io.Serial;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
@@ -53,38 +30,23 @@ import jpass.util.SpringUtilities;
 import jpass.util.StringUtils;
 import jpass.xml.bind.Entry;
 
-import static jpass.ui.helper.EntryHelper.copyEntryField;
-
 /**
  * A dialog with the entry data.
- *
- * @author Gabor_Bata
- *
  */
 public class EntryDialog extends JDialog implements ActionListener {
-
+    @Serial
     private static final long serialVersionUID = -8551022862532925078L;
     private static final char NULL_ECHO = '\0';
-
-    private final JPanel fieldPanel;
-    private final JPanel notesPanel;
-    private final JPanel buttonPanel;
-    private final JPanel passwordButtonPanel;
 
     private final JTextField titleField;
     private final JTextField userField;
     private final JPasswordField passwordField;
-    private final JPasswordField repeatField;
     private final JTextField urlField;
     private final JTextArea notesField;
 
-    private final JButton okButton;
-    private final JButton cancelButton;
     private final JToggleButton showButton;
-    private final JButton generateButton;
-    private final JButton copyButton;
 
-    private final char ORIGINAL_ECHO;
+    private final char originalEcho;
 
     private Entry formData;
 
@@ -107,81 +69,88 @@ public class EntryDialog extends JDialog implements ActionListener {
 
         this.formData = null;
 
-        this.fieldPanel = new JPanel();
+        JPanel fieldPanel = new JPanel();
 
-        this.fieldPanel.add(new JLabel("Title:"));
+        fieldPanel.add(new JLabel("Title:"));
         this.titleField = TextComponentFactory.newTextField();
-        this.fieldPanel.add(this.titleField);
+        fieldPanel.add(this.titleField);
 
-        this.fieldPanel.add(new JLabel("URL:"));
+        fieldPanel.add(new JLabel("URL:"));
         this.urlField = TextComponentFactory.newTextField();
-        this.fieldPanel.add(this.urlField);
+        fieldPanel.add(this.urlField);
 
-        this.fieldPanel.add(new JLabel("User name:"));
+        fieldPanel.add(new JLabel("User name:"));
         this.userField = TextComponentFactory.newTextField();
-        this.fieldPanel.add(this.userField);
+        fieldPanel.add(this.userField);
 
-        this.fieldPanel.add(new JLabel("Password:"));
+        fieldPanel.add(new JLabel("Password:"));
         this.passwordField = TextComponentFactory.newPasswordField(true);
-        this.ORIGINAL_ECHO = this.passwordField.getEchoChar();
-        this.fieldPanel.add(this.passwordField);
+        this.originalEcho = this.passwordField.getEchoChar();
+        fieldPanel.add(this.passwordField);
 
-        this.fieldPanel.add(new JLabel("Repeat:"));
-        this.repeatField = TextComponentFactory.newPasswordField(true);
-        this.fieldPanel.add(this.repeatField);
-
-        this.fieldPanel.add(new JLabel(""));
-        this.passwordButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        fieldPanel.add(new JLabel(""));
+        JPanel passwordButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         this.showButton = new JToggleButton("Show", MessageDialog.getIcon("show"));
         this.showButton.setActionCommand("show_button");
         this.showButton.setMnemonic(KeyEvent.VK_S);
         this.showButton.addActionListener(this);
-        this.passwordButtonPanel.add(this.showButton);
-        this.generateButton = new JButton("Generate", MessageDialog.getIcon("generate"));
-        this.generateButton.setActionCommand("generate_button");
-        this.generateButton.setMnemonic(KeyEvent.VK_G);
-        this.generateButton.addActionListener(this);
-        this.passwordButtonPanel.add(this.generateButton);
-        this.copyButton = new JButton("Copy", MessageDialog.getIcon("keyring"));
-        this.copyButton.setActionCommand("copy_button");
-        this.copyButton.setMnemonic(KeyEvent.VK_C);
-        this.copyButton.addActionListener(this);
-        this.passwordButtonPanel.add(this.copyButton);
-        this.fieldPanel.add(this.passwordButtonPanel);
+        passwordButtonPanel.add(this.showButton);
+        JButton generateButton = new JButton("Generate", MessageDialog.getIcon("generate"));
+        generateButton.setActionCommand("generate_button");
+        generateButton.setMnemonic(KeyEvent.VK_G);
+        generateButton.addActionListener(this);
+        passwordButtonPanel.add(generateButton);
+        JButton copyButton = new JButton("Copy", MessageDialog.getIcon("keyring"));
+        copyButton.setActionCommand("copy_button");
+        copyButton.setMnemonic(KeyEvent.VK_C);
+        copyButton.addActionListener(this);
+        passwordButtonPanel.add(copyButton);
+        fieldPanel.add(passwordButtonPanel);
 
-        this.fieldPanel.setLayout(new SpringLayout());
-        SpringUtilities.makeCompactGrid(this.fieldPanel,
-                6, 2, //rows, columns
+        fieldPanel.setLayout(new SpringLayout());
+        SpringUtilities.makeCompactGrid(fieldPanel,
+                5, 2, //rows, columns
                 5, 5, //initX, initY
                 5, 5);    //xPad, yPad
 
-        this.notesPanel = new JPanel(new BorderLayout(5, 5));
-        this.notesPanel.setBorder(new EmptyBorder(0, 5, 0, 5));
-        this.notesPanel.add(new JLabel("Notes:"), BorderLayout.NORTH);
+        JPanel notesPanel = new JPanel(new BorderLayout(5, 5));
+        notesPanel.setBorder(new EmptyBorder(0, 5, 0, 5));
+        notesPanel.add(new JLabel("Notes:"), BorderLayout.NORTH);
 
         this.notesField = TextComponentFactory.newTextArea();
         this.notesField.setFont(TextComponentFactory.newTextField().getFont());
         this.notesField.setLineWrap(true);
         this.notesField.setWrapStyleWord(true);
-        this.notesPanel.add(new JScrollPane(this.notesField), BorderLayout.CENTER);
+        notesPanel.add(new JScrollPane(this.notesField), BorderLayout.CENTER);
 
-        this.buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        this.okButton = new JButton("OK", MessageDialog.getIcon("accept"));
-        this.okButton.setActionCommand("ok_button");
-        this.okButton.setMnemonic(KeyEvent.VK_O);
-        this.okButton.addActionListener(this);
-        this.buttonPanel.add(this.okButton);
+        JButton okButton = new JButton("OK", MessageDialog.getIcon("accept"));
+        okButton.setActionCommand("ok_button");
+        okButton.setMnemonic(KeyEvent.VK_O);
+        okButton.addActionListener(this);
+        buttonPanel.add(okButton);
 
-        this.cancelButton = new JButton("Cancel", MessageDialog.getIcon("cancel"));
-        this.cancelButton.setActionCommand("cancel_button");
-        this.cancelButton.setMnemonic(KeyEvent.VK_C);
-        this.cancelButton.addActionListener(this);
-        this.buttonPanel.add(this.cancelButton);
+        JButton cancelButton = new JButton("Cancel", MessageDialog.getIcon("cancel"));
+        cancelButton.setActionCommand("cancel_button");
+        cancelButton.setMnemonic(KeyEvent.VK_C);
+        cancelButton.addActionListener(this);
+        buttonPanel.add(cancelButton);
 
-        getContentPane().add(this.fieldPanel, BorderLayout.NORTH);
-        getContentPane().add(this.notesPanel, BorderLayout.CENTER);
-        getContentPane().add(this.buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(fieldPanel, BorderLayout.NORTH);
+        getContentPane().add(notesPanel, BorderLayout.CENTER);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        rootPane.getActionMap().put("Cancel", new AbstractAction() {
+                @Serial
+                private static final long serialVersionUID = -2316585419066944600L;
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    setVisible(false);
+                    dispose();
+                }
+            });
 
         fillDialogData(entry);
         setSize(420, 400);
@@ -197,17 +166,13 @@ public class EntryDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
         if ("show_button".equals(command)) {
-            this.passwordField.setEchoChar(this.showButton.isSelected() ? NULL_ECHO : this.ORIGINAL_ECHO);
-            this.repeatField.setEchoChar(this.showButton.isSelected() ? NULL_ECHO : this.ORIGINAL_ECHO);
+            this.passwordField.setEchoChar(this.showButton.isSelected() ? NULL_ECHO : this.originalEcho);
         } else if ("ok_button".equals(command)) {
             if (this.titleField.getText().trim().isEmpty()) {
                 MessageDialog.showWarningMessage(this, "Please fill the title field.");
                 return;
             } else if (!checkEntryTitle()) {
                 MessageDialog.showWarningMessage(this, "Title is already exists,\nplease enter a different title.");
-                return;
-            } else if (!Arrays.equals(this.passwordField.getPassword(), this.repeatField.getPassword())) {
-                MessageDialog.showWarningMessage(this, "Password and repeated password are not identical.");
                 return;
             }
             setFormData(fetchDialogData());
@@ -216,10 +181,10 @@ public class EntryDialog extends JDialog implements ActionListener {
             dispose();
         } else if ("generate_button".equals(command)) {
             GeneratePasswordDialog gpd = new GeneratePasswordDialog(this);
+            gpd.setVisible(true);
             String generatedPassword = gpd.getGeneratedPassword();
             if (generatedPassword != null && !generatedPassword.isEmpty()) {
                 this.passwordField.setText(generatedPassword);
-                this.repeatField.setText(generatedPassword);
             }
         } else if ("copy_button".equals(command)) {
             copyEntryField(JPassFrame.getInstance(), String.valueOf(this.passwordField.getPassword()));
@@ -239,7 +204,6 @@ public class EntryDialog extends JDialog implements ActionListener {
         this.titleField.setText(this.originalTitle + (this.newEntry ? " (copy)" : ""));
         this.userField.setText(entry.getUser() == null ? "" : entry.getUser());
         this.passwordField.setText(entry.getPassword() == null ? "" : entry.getPassword());
-        this.repeatField.setText(entry.getPassword() == null ? "" : entry.getPassword());
         this.urlField.setText(entry.getUrl() == null ? "" : entry.getUrl());
         this.notesField.setText(entry.getNotes() == null ? "" : entry.getNotes());
         this.notesField.setCaretPosition(0);

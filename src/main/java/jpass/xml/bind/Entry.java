@@ -10,6 +10,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import java.io.Serial;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -50,8 +52,9 @@ import javax.xml.bind.annotation.XmlType;
     "password",
     "notes"
 })
-public class Entry {
-
+public class Entry implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -4607121645454405611L;
     @XmlElement(required = true)
     protected String title;
     protected String url;
@@ -140,7 +143,7 @@ public class Entry {
     }
 
     /**
-     * Gets the value of the notes property.
+     * Gets the value of the notes' property.
      *
      * @return possible object is {@link String}
      *
@@ -150,7 +153,7 @@ public class Entry {
     }
 
     /**
-     * Sets the value of the notes property.
+     * Sets the value of the notes' property.
      *
      * @param value allowed object is {@link String}
      *
@@ -158,5 +161,4 @@ public class Entry {
     public void setNotes(String value) {
         this.notes = value;
     }
-
 }

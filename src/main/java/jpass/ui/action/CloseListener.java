@@ -48,8 +48,8 @@ public class CloseListener extends WindowAdapter {
      */
     @Override
     public void windowClosing(WindowEvent event) {
-        if (event.getSource() instanceof JPassFrame) {
-            ((JPassFrame) event.getSource()).exitFrame();
+        if (event.getSource() instanceof JPassFrame frame) {
+            frame.exitFrame();
         }
     }
 }
