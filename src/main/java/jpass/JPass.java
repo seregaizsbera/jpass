@@ -43,7 +43,6 @@ import java.util.logging.Logger;
  * Entry point of JPass.
  *
  * @author Gabor_Bata
- *
  */
 public class JPass {
 

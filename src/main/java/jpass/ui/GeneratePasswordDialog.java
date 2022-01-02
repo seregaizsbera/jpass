@@ -51,6 +51,10 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
     @Serial
     private static final long serialVersionUID = -1807066563698740446L;
 
+    public static final int DEFAULT_PASSWORD_LENGTH = 14;
+    public static final int MAX_GENERATED_PASSWORD_LENGTH = 64;
+    public static final int MIN_GENERATED_PASSWORD_LENGTH = 1;
+
     /**
      * Characters for custom symbols generation.
      */
@@ -112,15 +116,15 @@ public final class GeneratePasswordDialog extends JDialog implements ActionListe
         JLabel lengthLabel = new JLabel("Password length:");
         lengthPanel.add(lengthLabel);
 
-        int passwordGenerationLength = Configuration.getInteger("default.password.generation.length", 8);
-        if (passwordGenerationLength > 64) {
-            passwordGenerationLength = 64;
+        int passwordGenerationLength = Configuration.getInteger("default.password.generation.length", DEFAULT_PASSWORD_LENGTH);
+        if (passwordGenerationLength > MAX_GENERATED_PASSWORD_LENGTH) {
+            passwordGenerationLength = MAX_GENERATED_PASSWORD_LENGTH;
         }
-        if (passwordGenerationLength < 1) {
-            passwordGenerationLength = 1;
+        if (passwordGenerationLength < MIN_GENERATED_PASSWORD_LENGTH) {
+            passwordGenerationLength = MIN_GENERATED_PASSWORD_LENGTH;
         }
 
-        this.lengthSpinner = new JSpinner(new SpinnerNumberModel(passwordGenerationLength, 1, 64, 1));
+        this.lengthSpinner = new JSpinner(new SpinnerNumberModel(passwordGenerationLength, MIN_GENERATED_PASSWORD_LENGTH, passwordGenerationLength, 1));
         lengthPanel.add(this.lengthSpinner);
 
         JPanel charactersPanel = new JPanel();

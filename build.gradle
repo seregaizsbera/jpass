@@ -1,8 +1,8 @@
 plugins({
-    id("com.palantir.git-version").version("0.12.3")
+    id("com.palantir.git-version").version("${gitVersionPluginVersion}")
     id("jacoco")
     id("java")
-    id("org.owasp.dependencycheck").version("6.5.0.1")
+    id("org.owasp.dependencycheck").version("${owaspVersion}")
 })
 
 group = "jpass"
@@ -11,12 +11,12 @@ version = gitVersion()
 repositories.mavenCentral()
 
 dependencies({
-    implementation("javax.xml.bind:jaxb-api:2.3.1")
-    runtimeOnly("com.sun.xml.bind:jaxb-core:3.0.2")
-    runtimeOnly("com.sun.xml.bind:jaxb-impl:2.3.5")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+    implementation("javax.xml.bind:jaxb-api:${jaxbApiVersion}")
+    runtimeOnly("com.sun.xml.bind:jaxb-core:${jaxbCoreVersion}")
+    runtimeOnly("com.sun.xml.bind:jaxb-impl:${jaxbImplVersion}")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${jupiterVersion}")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${jupiterVersion}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${jupiterVersion}")
 })
 
 tasks.withType(JavaCompile).configureEach({
@@ -45,6 +45,7 @@ jar({
 })
 
 task fatJar(type: Jar) {
+    group = "build"
     manifest {
         attributes "Main-Class": "jpass.JPass"
     }

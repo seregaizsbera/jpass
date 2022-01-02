@@ -87,7 +87,7 @@ public final class DocumentHelper {
      * @param fileName file name
      * @return a new DocumentHelper object
      */
-    public static DocumentHelper newInstance(final String fileName) {
+    public static DocumentHelper newInstance(String fileName) {
         return new DocumentHelper(fileName, null);
     }
 
