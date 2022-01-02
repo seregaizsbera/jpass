@@ -31,19 +31,18 @@ package jpass.ui.helper;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
 import jpass.data.DocumentHelper;
+import jpass.data.DocumentProcessException;
 import jpass.ui.JPassFrame;
 import jpass.ui.MessageDialog;
 import jpass.ui.action.Callback;
 import jpass.ui.action.Worker;
-import jpass.util.IconStorage;
 import jpass.util.StringUtils;
-import jpass.xml.bind.Entry;
 
 /**
  * Helper utils for file operations.
@@ -70,14 +69,11 @@ public final class FileHelper {
                     + "Do you want to save the changes before closing?",
                     MessageDialog.YES_NO_CANCEL_OPTION);
             if (option == MessageDialog.YES_OPTION) {
-                saveFile(parent, false, new Callback() {
-                    @Override
-                    public void call(boolean result) {
-                        if (result) {
-                            parent.clearModel();
-                            parent.getSearchPanel().setVisible(false);
-                            parent.refreshAll();
-                        }
+                saveFile(parent, false, result -> {
+                    if (result) {
+                        parent.clearModel();
+                        parent.getSearchPanel().setVisible(false);
+                        parent.refreshAll();
                     }
                 });
                 return;
@@ -108,11 +104,11 @@ public final class FileHelper {
         }
         Worker worker = new Worker(parent) {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() throws IOException {
                 try {
                     DocumentHelper.newInstance(fileName).writeDocument(parent.getModel().getEntries());
-                } catch (Throwable e) {
-                    throw new Exception("An error occured during the export operation:\n" + e.getMessage());
+                } catch (DocumentProcessException e) {
+                    throw new IOException("An error occurred during the export operation:\n" + e.getMessage());
                 }
                 return null;
             }
@@ -138,12 +134,9 @@ public final class FileHelper {
                     + "Do you want to save the changes before closing?",
                     MessageDialog.YES_NO_CANCEL_OPTION);
             if (option == MessageDialog.YES_OPTION) {
-                saveFile(parent, false, new Callback() {
-                    @Override
-                    public void call(boolean result) {
-                        if (result) {
-                            doImportFile(fileName, parent);
-                        }
+                saveFile(parent, false, result -> {
+                    if (result) {
+                        doImportFile(fileName, parent);
                     }
                 });
                 return;
@@ -163,16 +156,15 @@ public final class FileHelper {
     static void doImportFile(final String fileName, final JPassFrame parent) {
         Worker worker = new Worker(parent) {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() throws IOException {
                 try {
                     parent.getModel().setEntries(DocumentHelper.newInstance(fileName).readDocument());
                     parent.getModel().setModified(true);
                     parent.getModel().setFileName(null);
                     parent.getModel().setPassword(null);
                     parent.getSearchPanel().setVisible(false);
-                    preloadDomainIcons(parent.getModel().getEntries().getEntry());
-                } catch (Throwable e) {
-                    throw new Exception("An error occured during the import operation:\n" + e.getMessage());
+                } catch (DocumentProcessException e) {
+                    throw new IOException("An error occurred during the import operation:\n" + e.getMessage());
                 }
                 return null;
             }
@@ -187,12 +179,7 @@ public final class FileHelper {
      * @param saveAs normal 'Save' dialog or 'Save as'
      */
     public static void saveFile(final JPassFrame parent, final boolean saveAs) {
-        saveFile(parent, saveAs, new Callback() {
-            @Override
-            public void call(boolean result) {
-                //default empty call
-            }
-        });
+        saveFile(parent, saveAs, result -> {});
     }
 
     /**
@@ -203,8 +190,8 @@ public final class FileHelper {
      * @param callback callback function with the result; the result is {@code true} if the file
      * successfully saved; otherwise {@code false}
      */
-    public static void saveFile(final JPassFrame parent, final boolean saveAs, final Callback callback) {
-        final String fileName;
+    public static void saveFile(JPassFrame parent, boolean saveAs, Callback callback) {
+        String fileName;
         if (saveAs || parent.getModel().getFileName() == null) {
             File file = showFileChooser(parent, "Save", "jpass", "JPass Data Files (*.jpass)");
             if (file == null) {
@@ -219,44 +206,17 @@ public final class FileHelper {
         } else {
             fileName = parent.getModel().getFileName();
         }
-
-        final byte[] password;
+        char[] password;
         if (parent.getModel().getPassword() == null) {
             password = MessageDialog.showPasswordDialog(parent, true);
-            if (password == null) {
+            if (password.length == 0) {
                 callback.call(false);
                 return;
             }
         } else {
             password = parent.getModel().getPassword();
         }
-        Worker worker = new Worker(parent) {
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    DocumentHelper.newInstance(fileName, password).writeDocument(parent.getModel().getEntries());
-                    parent.getModel().setFileName(fileName);
-                    parent.getModel().setPassword(password);
-                    parent.getModel().setModified(false);
-                } catch (Throwable e) {
-                    throw new Exception("An error occured during the save operation:\n" + e.getMessage());
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                stopProcessing();
-                boolean result = true;
-                try {
-                    get();
-                } catch (Exception e) {
-                    result = false;
-                    showErrorMessage(e);
-                }
-                callback.call(result);
-            }
-        };
+        Worker worker = new SaveFileWorker(parent, fileName, password, callback);
         worker.execute();
     }
 
@@ -277,12 +237,9 @@ public final class FileHelper {
                     + "Do you want to save the changes before closing?",
                     MessageDialog.YES_NO_CANCEL_OPTION);
             if (option == MessageDialog.YES_OPTION) {
-                saveFile(parent, false, new Callback() {
-                    @Override
-                    public void call(boolean result) {
-                        if (result) {
-                            doOpenFile(file.getPath(), parent);
-                        }
+                saveFile(parent, false, result -> {
+                    if (result) {
+                        doOpenFile(file.getPath(), parent);
                     }
                 });
                 return;
@@ -304,25 +261,20 @@ public final class FileHelper {
         if (fileName == null) {
             return;
         }
-        final byte[] password = MessageDialog.showPasswordDialog(parent, false);
-        if (password == null) {
+        char[] password = MessageDialog.showPasswordDialog(parent, false);
+        if (password.length == 0) {
             return;
         }
         Worker worker = new Worker(parent) {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() throws IOException {
                 try {
                     parent.getModel().setEntries(DocumentHelper.newInstance(fileName, password).readDocument());
                     parent.getModel().setFileName(fileName);
                     parent.getModel().setPassword(password);
                     parent.getSearchPanel().setVisible(false);
-                    preloadDomainIcons(parent.getModel().getEntries().getEntry());
-                } catch (FileNotFoundException e) {
-                    throw e;
-                } catch (IOException e) {
-                    throw new Exception("An error occured during the open operation.\nPlease check your password.");
-                } catch (Throwable e) {
-                    throw new Exception("An error occured during the open operation:\n" + e.getMessage());
+                } catch (DocumentProcessException e) {
+                    throw new IOException("An error occurred during the open operation:\n" + e.getMessage());
                 }
                 return null;
             }
@@ -332,8 +284,10 @@ public final class FileHelper {
                 stopProcessing();
                 try {
                     get();
-                } catch (Exception e) {
-                    if (e.getCause() != null && e.getCause() instanceof FileNotFoundException) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    if (e.getCause() instanceof FileNotFoundException) {
                         handleFileNotFound(parent, fileName, password);
                     } else {
                         showErrorMessage(e);
@@ -351,19 +305,19 @@ public final class FileHelper {
      * @param fileName file name
      * @param password password to create a new file
      */
-    static void handleFileNotFound(final JPassFrame parent, final String fileName, final byte[] password) {
+    static void handleFileNotFound(JPassFrame parent, String fileName, char[] password) {
         int option = MessageDialog.showQuestionMessage(parent, "File not found:\n" + StringUtils.stripString(fileName)
                 + "\n\nDo you want to create the file?", MessageDialog.YES_NO_OPTION);
         if (option == MessageDialog.YES_OPTION) {
             Worker fileNotFoundWorker = new Worker(parent) {
                 @Override
-                protected Void doInBackground() throws Exception {
+                protected Void doInBackground() throws IOException {
                     try {
                         DocumentHelper.newInstance(fileName, password).writeDocument(parent.getModel().getEntries());
                         parent.getModel().setFileName(fileName);
                         parent.getModel().setPassword(password);
-                    } catch (Exception ex) {
-                        throw new Exception("An error occured during the open operation:\n" + ex.getMessage());
+                    } catch (DocumentProcessException e) {
+                        throw new IOException("An error occurred during the open operation:\n" + e.getMessage());
                     }
                     return null;
                 }
@@ -411,6 +365,7 @@ public final class FileHelper {
      * @param parent parent component
      * @return {@code true} if overwrite is accepted; otherwise {@code false}
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean checkFileOverwrite(String fileName, JPassFrame parent) {
         boolean overwriteAccepted = true;
         File file = new File(fileName);
@@ -439,15 +394,46 @@ public final class FileHelper {
         return fileName;
     }
 
-    /**
-     * Preload favicon image icons for domains.
-     *
-     * @param entries the entries
-     */
-    private static void preloadDomainIcons(List<Entry> entries) {
-        IconStorage iconStorage = IconStorage.newInstance();
-        for (Entry entry : entries) {
-            iconStorage.getIcon(entry.getUrl());
+    private static class SaveFileWorker extends Worker {
+        private final JPassFrame parent;
+        private final String fileName;
+        private final char[] password;
+        private final Callback callback;
+
+        public SaveFileWorker(JPassFrame parent, String fileName, char[] password, Callback callback) {
+            super(parent);
+            this.parent = parent;
+            this.fileName = fileName;
+            this.password = password;
+            this.callback = callback;
+        }
+
+        @Override
+        protected Void doInBackground() throws IOException {
+            try {
+                DocumentHelper.newInstance(fileName, password).writeDocument(parent.getModel().getEntries());
+                parent.getModel().setFileName(fileName);
+                parent.getModel().setPassword(password);
+                parent.getModel().setModified(false);
+            } catch (DocumentProcessException e) {
+                throw new IOException("An error occurred during the save operation:\n" + e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            stopProcessing();
+            boolean result = true;
+            try {
+                get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                result = false;
+                showErrorMessage(e);
+            }
+            callback.call(result);
         }
     }
 }

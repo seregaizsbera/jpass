@@ -50,14 +50,10 @@ public class JPass {
     private static final Logger LOG = Logger.getLogger(JPass.class.getName());
     private static final String METAL_LOOK_AND_FEEL = "javax.swing.plaf.metal.MetalLookAndFeel";
 
-    static {
-        System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] %5$s %n");
-    }
-
     public static void main(final String[] args) {
         try {
             String lookAndFeel;
-            if (Configuration.getInstance().is("system.look.and.feel.enabled", true)) {
+            if (Configuration.is("system.look.and.feel.enabled", true)) {
                 lookAndFeel = UIManager.getSystemLookAndFeelClassName();
             } else {
                 lookAndFeel = METAL_LOOK_AND_FEEL;
@@ -110,12 +106,6 @@ public class JPass {
         } catch (Exception e) {
             LOG.log(Level.CONFIG, "Could not set look and feel for the application", e);
         }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                JPassFrame.getInstance((args.length > 0) ? args[0] : null);
-            }
-        });
+        SwingUtilities.invokeLater(() -> JPassFrame.getInstance((args.length > 0) ? args[0] : null));
     }
 }

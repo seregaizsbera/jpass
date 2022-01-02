@@ -29,6 +29,8 @@
 
 package jpass.data;
 
+import java.io.Serial;
+
 /**
  * Exception if the processing of XML document fails.
  *
@@ -36,6 +38,7 @@ package jpass.data;
  *
  */
 public class DocumentProcessException extends Exception {
+    @Serial
     private static final long serialVersionUID = -7537365518215844073L;
 
     public DocumentProcessException(String message) {

@@ -28,31 +28,28 @@
  */
 package jpass.ui.action;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.KeyStroke;
-import javax.swing.text.Caret;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
-
 import jpass.ui.CopiablePasswordField;
 import jpass.util.ClipboardUtils;
 
+import javax.swing.*;
+import javax.swing.text.Caret;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.io.Serial;
+
 import static javax.swing.KeyStroke.getKeyStroke;
-import static java.awt.event.InputEvent.CTRL_MASK;
 
 /**
  * Enumeration which holds text actions and related data.
  *
  * @author Gabor_Bata
- *
  */
 public enum TextComponentActionType {
-    CUT(new TextComponentAction("Cut", getKeyStroke(KeyEvent.VK_X, CTRL_MASK), KeyEvent.VK_T) {
+    CUT(new TextComponentAction("Cut", getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), KeyEvent.VK_T) {
+        @Serial
         private static final long serialVersionUID = 6463843410774724700L;
 
         @Override
@@ -71,14 +68,15 @@ public enum TextComponentActionType {
         @Override
         public boolean isEnabled(JTextComponent component) {
             boolean copyEnabled = true;
-            if (component instanceof CopiablePasswordField) {
-                copyEnabled = ((CopiablePasswordField) component).isCopyEnabled();
+            if (component instanceof CopiablePasswordField field) {
+                copyEnabled = field.isCopyEnabled();
             }
             return component != null && copyEnabled && component.isEnabled() && component.isEditable()
                     && component.getSelectedText() != null;
         }
     }),
-    COPY(new TextComponentAction("Copy", getKeyStroke(KeyEvent.VK_C, CTRL_MASK), KeyEvent.VK_C) {
+    COPY(new TextComponentAction("Copy", getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), KeyEvent.VK_C) {
+        @Serial
         private static final long serialVersionUID = 8502265220762730908L;
 
         @Override
@@ -96,13 +94,14 @@ public enum TextComponentActionType {
         @Override
         public boolean isEnabled(JTextComponent component) {
             boolean copyEnabled = true;
-            if (component instanceof CopiablePasswordField) {
-                copyEnabled = ((CopiablePasswordField) component).isCopyEnabled();
+            if (component instanceof CopiablePasswordField field) {
+                copyEnabled = field.isCopyEnabled();
             }
             return component != null && copyEnabled && component.isEnabled() && component.getSelectedText() != null;
         }
     }),
-    PASTE(new TextComponentAction("Paste", getKeyStroke(KeyEvent.VK_V, CTRL_MASK), KeyEvent.VK_P) {
+    PASTE(new TextComponentAction("Paste", getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), KeyEvent.VK_P) {
+        @Serial
         private static final long serialVersionUID = -4089879595174370487L;
 
         @Override
@@ -120,6 +119,7 @@ public enum TextComponentActionType {
         }
     }),
     DELETE(new TextComponentAction("Delete", getKeyStroke(KeyEvent.VK_DELETE, 0), KeyEvent.VK_D) {
+        @Serial
         private static final long serialVersionUID = 1227622869347781706L;
 
         @Override
@@ -158,6 +158,7 @@ public enum TextComponentActionType {
         }
     }),
     CLEAR_ALL(new TextComponentAction("Clear All", null, KeyEvent.VK_L) {
+        @Serial
         private static final long serialVersionUID = 5810788894068735542L;
 
         @Override
@@ -172,10 +173,10 @@ public enum TextComponentActionType {
         @Override
         public boolean isEnabled(JTextComponent component) {
             boolean result;
-            if (component instanceof CopiablePasswordField) {
+            if (component instanceof CopiablePasswordField field) {
                 result = component.isEnabled() && component.isEditable()
-                        && ((CopiablePasswordField) component).getPassword() != null
-                        && ((CopiablePasswordField) component).getPassword().length > 0;
+                        && field.getPassword() != null
+                        && field.getPassword().length > 0;
             } else {
                 result = component != null && component.isEnabled() && component.isEditable()
                         && component.getText() != null && !component.getText().isEmpty();
@@ -183,7 +184,8 @@ public enum TextComponentActionType {
             return result;
         }
     }),
-    SELECT_ALL(new TextComponentAction("Select All", getKeyStroke(KeyEvent.VK_A, CTRL_MASK), KeyEvent.VK_A) {
+    SELECT_ALL(new TextComponentAction("Select All", getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), KeyEvent.VK_A) {
+        @Serial
         private static final long serialVersionUID = 7236761124177884500L;
 
         @Override
@@ -197,9 +199,9 @@ public enum TextComponentActionType {
         @Override
         public boolean isEnabled(JTextComponent component) {
             boolean result;
-            if (component instanceof CopiablePasswordField) {
-                result = component.isEnabled() && ((CopiablePasswordField) component).getPassword() != null
-                        && ((CopiablePasswordField) component).getPassword().length > 0;
+            if (component instanceof CopiablePasswordField field) {
+                result = component.isEnabled() && field.getPassword() != null
+                        && field.getPassword().length > 0;
             } else {
                 result = component != null && component.isEnabled() && component.getText() != null
                         && !component.getText().isEmpty();
@@ -211,7 +213,7 @@ public enum TextComponentActionType {
     private final String name;
     private final TextComponentAction action;
 
-    private TextComponentActionType(TextComponentAction action) {
+    TextComponentActionType(TextComponentAction action) {
         this.name = String.format("jpass.text.%s_action", this.name().toLowerCase());
         this.action = action;
     }
@@ -228,7 +230,7 @@ public enum TextComponentActionType {
         return (KeyStroke) this.action.getValue(Action.ACCELERATOR_KEY);
     }
 
-    public static final void bindAllActions(JTextComponent component) {
+    public static void bindAllActions(JTextComponent component) {
         ActionMap actionMap = component.getActionMap();
         InputMap inputMap = component.getInputMap();
         for (TextComponentActionType type : values()) {

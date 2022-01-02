@@ -39,10 +39,8 @@ import javax.swing.text.JTextComponent;
  * A listener which adds context menu capability to text components.
  *
  * @author Gabor_Bata
- *
  */
 public class TextComponentPopupListener extends MouseAdapter {
-
     private final JPopupMenu popup;
     private final JMenuItem cutItem;
     private final JMenuItem copyItem;
@@ -70,17 +68,15 @@ public class TextComponentPopupListener extends MouseAdapter {
     }
 
     private void showPopupMenu(MouseEvent e) {
-        if (e.isPopupTrigger() && e.getSource() instanceof JTextComponent) {
-            JTextComponent textComponent = (JTextComponent) e.getSource();
-            if (textComponent.isEnabled() && (textComponent.hasFocus() || textComponent.requestFocusInWindow())) {
-                this.cutItem.setEnabled(TextComponentActionType.CUT.getAction().isEnabled(textComponent));
-                this.copyItem.setEnabled(TextComponentActionType.COPY.getAction().isEnabled(textComponent));
-                this.pasteItem.setEnabled(TextComponentActionType.PASTE.getAction().isEnabled(textComponent));
-                this.deleteItem.setEnabled(TextComponentActionType.DELETE.getAction().isEnabled(textComponent));
-                this.clearAllItem.setEnabled(TextComponentActionType.CLEAR_ALL.getAction().isEnabled(textComponent));
-                this.selectAllItem.setEnabled(TextComponentActionType.SELECT_ALL.getAction().isEnabled(textComponent));
-                this.popup.show(e.getComponent(), e.getX(), e.getY());
-            }
+        if (e.isPopupTrigger() && e.getSource() instanceof JTextComponent textComponent &&
+                textComponent.isEnabled() && (textComponent.hasFocus() || textComponent.requestFocusInWindow())) {
+            this.cutItem.setEnabled(TextComponentActionType.CUT.getAction().isEnabled(textComponent));
+            this.copyItem.setEnabled(TextComponentActionType.COPY.getAction().isEnabled(textComponent));
+            this.pasteItem.setEnabled(TextComponentActionType.PASTE.getAction().isEnabled(textComponent));
+            this.deleteItem.setEnabled(TextComponentActionType.DELETE.getAction().isEnabled(textComponent));
+            this.clearAllItem.setEnabled(TextComponentActionType.CLEAR_ALL.getAction().isEnabled(textComponent));
+            this.selectAllItem.setEnabled(TextComponentActionType.SELECT_ALL.getAction().isEnabled(textComponent));
+            this.popup.show(e.getComponent(), e.getX(), e.getY());
         }
     }
 

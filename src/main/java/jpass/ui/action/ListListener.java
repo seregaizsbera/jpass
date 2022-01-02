@@ -86,12 +86,12 @@ public class ListListener extends MouseAdapter {
      *
      * @param evt mouse event
      */
-    private void checkPopup(MouseEvent evt) {
+    private static void checkPopup(MouseEvent evt) {
         if (JPassFrame.getInstance().isProcessing()) {
             return;
         }
         if (evt.isPopupTrigger()) {
-            JList list = JPassFrame.getInstance().getEntryTitleList();
+            JList<String> list = JPassFrame.getInstance().getEntryTitleList();
             if (list.isEnabled()) {
                 Point point = new Point(evt.getX(), evt.getY());
                 list.setSelectedIndex(list.locationToIndex(point));

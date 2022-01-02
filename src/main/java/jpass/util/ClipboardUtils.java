@@ -35,6 +35,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * System clipboard related utility class.
@@ -57,32 +59,21 @@ public final class ClipboardUtils {
      * Sets text to the system clipboard.
      *
      * @param str text
-     * @throws Exception when clipboard is not accessible
      */
-    public static void setClipboardContent(String str) throws Exception {
+    public static void setClipboardContent(String str) {
         if (str == null || str.isEmpty()) {
             clearClipboardContent();
             return;
         }
-        try {
-            StringSelection selection = new StringSelection(str);
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
-        } catch (Throwable throwable) {
-            throw new Exception("Cannot set clipboard content.");
-        }
+        StringSelection selection = new StringSelection(str);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
     }
 
     /**
      * Clears the system clipboard.
-     *
-     * @throws Exception when clipboard is not accessible
      */
-    public static void clearClipboardContent() throws Exception {
-        try {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(EMPTY_CONTENT, EMPTY_CONTENT);
-        } catch (Throwable throwable) {
-            throw new Exception("Cannot set clipboard content.");
-        }
+    public static void clearClipboardContent() {
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(EMPTY_CONTENT, EMPTY_CONTENT);
     }
 
     /**
@@ -97,8 +88,10 @@ public final class ClipboardUtils {
             if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 result = String.valueOf(contents.getTransferData(DataFlavor.stringFlavor));
             }
-        } catch (Throwable throwable) {
-            // ignore
+        } catch (UnsupportedFlavorException e) {
+            throw new UncheckedIOException(new IOException(e));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
         return result == null || result.isEmpty() ? null : result;
     }
@@ -111,7 +104,6 @@ public final class ClipboardUtils {
      *
      */
     protected static final class EmptyClipboardContent implements Transferable, ClipboardOwner {
-
         @Override
         public DataFlavor[] getTransferDataFlavors() {
             return new DataFlavor[0];

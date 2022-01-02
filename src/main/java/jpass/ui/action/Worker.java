@@ -33,15 +33,16 @@ import javax.swing.SwingWorker;
 import jpass.ui.JPassFrame;
 import jpass.ui.MessageDialog;
 
+import java.util.concurrent.ExecutionException;
+
 /**
- * Worker class for time consuming tasks. While the task is running, the main application is
+ * Worker class for time-consuming tasks. While the task is running, the main application is
  * disabled, and a progress indicator is shown.
  *
  * @author Gabor_Bata
  *
  */
 public abstract class Worker extends SwingWorker<Void, Void> {
-
     /**
      * Main application frame.
      */
@@ -52,7 +53,7 @@ public abstract class Worker extends SwingWorker<Void, Void> {
      *
      * @param parent main application frame
      */
-    public Worker(final JPassFrame parent) {
+    protected Worker(JPassFrame parent) {
         this.parent = parent;
         this.parent.setProcessing(true);
     }
@@ -68,17 +69,19 @@ public abstract class Worker extends SwingWorker<Void, Void> {
         stopProcessing();
         try {
             get();
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
             showErrorMessage(e);
         }
     }
 
     /**
-     * Shows the message of the corresponding exception..
+     * Shows the message of the corresponding exception.
      *
      * @param e the exception
      */
-    protected void showErrorMessage(final Exception e) {
+    protected void showErrorMessage(Exception e) {
         String message;
         if (e.getCause() != null) {
             message = e.getCause().getMessage();

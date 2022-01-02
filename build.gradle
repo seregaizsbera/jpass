@@ -1,54 +1,65 @@
-apply plugin: 'java'
-apply plugin: 'distribution'
+plugins({
+    id("com.palantir.git-version").version("0.12.3")
+    id("jacoco")
+    id("java")
+    id("org.owasp.dependencycheck").version("6.5.0.1")
+})
 
-compileJava.options.encoding = 'UTF-8'
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+group = "jpass"
+version = gitVersion()
 
-repositories {
-    mavenCentral()
-}
+repositories.mavenCentral()
 
-dependencies {
-    testCompile 'junit:junit:4.11'
-}
+dependencies({
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("com.sun.xml.bind:jaxb-core:2.3.0.1")
+    implementation("com.sun.xml.bind:jaxb-impl:2.3.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+})
 
-jar {
-    baseName = 'jpass'
-    version = '0.1.16-SNAPSHOT'
+tasks.withType(JavaCompile).configureEach({
+    options.encoding = "UTF-8"
+    options.deprecation = true
+    options.warnings = true
+    options.compilerArgs << "-Xlint:all"
+})
+
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
+
+dependencyCheck({
+    autoUpdate = false
+    format = "ALL"
+    outputDirectory = buildDir.toPath().resolve("reports").resolve("dependency-check").toString()
+    analyzers.assemblyEnabled = false
+    failBuildOnCVSS = 0
+    suppressionFile = project.projectDir.toPath().resolve("src").resolve("main").resolve("resources").resolve("dependency-check-suppressions.xml")
+})
+
+jar({
+    manifest({
+        attributes("Main-Class": "jpass.JPass")
+    })
+})
+
+task fatJar(type: Jar) {
     manifest {
-        attributes('Main-Class': 'jpass.JPass')
+        attributes "Main-Class": "jpass.JPass"
     }
-}
-
-task copyConfig(type: Copy) {
-    from 'src/main/config'
-    into 'build/libs'
-}
-
-distributions {
-    main {
-        baseName = "$jar.baseName-$jar.version-dist"
-        contents {
-            from jar
-            from { 'src/main/config' }
-            into '/'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
         }
-    }
+    } with jar
 }
 
-task bumpVersion {
-    doLast {
-        if (!project.hasProperty('toVersion')) {
-            throw new GradleException("Please provide 'toVersion' property e.g. gradle bumpVersion -PtoVersion=<version>")
-        }
-        def extensions = ['java', 'gradle', 'sbt', 'xml', 'md', 'bat', 'sh', 'txt'].collect { "**/*.$it" }.join(",")
-        def files = new groovy.util.FileNameFinder().getFileNames("$projectDir", extensions)
-        files.each { versionedFile ->
-            def file = new File(versionedFile)
-            file.write(file.getText('UTF-8').replaceAll("$jar.version", "$toVersion"), 'UTF-8')
-        }
-    }
-}
+test.useJUnitPlatform()
+test.finalizedBy(jacocoTestReport)
 
-build.dependsOn copyConfig
+jacocoTestReport.dependsOn(test)
+jacocoTestReport.reports({
+    xml.required.set(true)
+})

@@ -38,7 +38,6 @@ import jpass.xml.bind.Entry;
  * Helper class for entry operations.
  *
  * @author Gabor_Bata
- *
  */
 public final class EntryHelper {
 
@@ -59,7 +58,7 @@ public final class EntryHelper {
         int option = MessageDialog.showQuestionMessage(parent, "Do you really want to delete this entry?",
                 MessageDialog.YES_NO_OPTION);
         if (option == MessageDialog.YES_OPTION) {
-            String title = (String) parent.getEntryTitleList().getSelectedValue();
+            String title = parent.getEntryTitleList().getSelectedValue();
             parent.getModel().getEntries().getEntry().remove(parent.getModel().getEntryByTitle(title));
             parent.getModel().setModified(true);
             parent.refreshFrameTitle();
@@ -77,7 +76,7 @@ public final class EntryHelper {
             MessageDialog.showWarningMessage(parent, "Please select an entry.");
             return;
         }
-        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        String title = parent.getEntryTitleList().getSelectedValue();
         Entry oldEntry = parent.getModel().getEntryByTitle(title);
         EntryDialog ed = new EntryDialog(parent, "Duplicate Entry", oldEntry, true);
         if (ed.getFormData() != null) {
@@ -98,7 +97,7 @@ public final class EntryHelper {
             MessageDialog.showWarningMessage(parent, "Please select an entry.");
             return;
         }
-        String title = (String) parent.getEntryTitleList().getSelectedValue();
+        String title = parent.getEntryTitleList().getSelectedValue();
         Entry oldEntry = parent.getModel().getEntryByTitle(title);
         EntryDialog ed = new EntryDialog(parent, "Edit Entry", oldEntry, false);
         if (ed.getFormData() != null) {
@@ -136,7 +135,7 @@ public final class EntryHelper {
             MessageDialog.showWarningMessage(parent, "Please select an entry.");
             return null;
         }
-        return parent.getModel().getEntryByTitle((String) parent.getEntryTitleList().getSelectedValue());
+        return parent.getModel().getEntryByTitle(parent.getEntryTitleList().getSelectedValue());
     }
 
     /**

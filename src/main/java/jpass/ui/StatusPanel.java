@@ -29,6 +29,7 @@
 package jpass.ui;
 
 import java.awt.BorderLayout;
+import java.io.Serial;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,7 +43,7 @@ import javax.swing.border.EmptyBorder;
  *
  */
 public class StatusPanel extends JPanel {
-
+    @Serial
     private static final long serialVersionUID = 5455248210301851210L;
 
     private final JLabel label;
