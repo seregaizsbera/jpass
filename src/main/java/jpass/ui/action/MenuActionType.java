@@ -52,7 +52,6 @@ import static jpass.ui.helper.FileHelper.saveFile;
  * Enumeration which holds menu actions and related data.
  *
  * @author Gabor_Bata
- *
  */
 public enum MenuActionType {
     NEW_FILE(new AbstractMenuAction("New", getIcon("new"), getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK)) {

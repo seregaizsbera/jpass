@@ -34,7 +34,6 @@ import java.io.Serializable;
  * Simple callback method interface.
  *
  * @author Gabor_Bata
- *
  */
 public interface Callback extends Serializable {
 

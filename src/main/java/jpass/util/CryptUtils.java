@@ -35,7 +35,6 @@ import java.util.Random;
  * Crypto related utility class.
  *
  * @author Gabor_Bata
- *
  */
 public final class CryptUtils {
     private static final Random random = new SecureRandom();

@@ -32,7 +32,6 @@ package jpass.util;
  * String utility class.
  *
  * @author Gabor_Bata
- *
  */
 public final class StringUtils {
 

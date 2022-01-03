@@ -40,7 +40,6 @@ import javax.swing.border.EmptyBorder;
  * Class for representing a status bar.
  *
  * @author Gabor_Bata
- *
  */
 public class StatusPanel extends JPanel {
     @Serial

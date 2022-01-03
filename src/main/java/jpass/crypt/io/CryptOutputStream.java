@@ -1,21 +1,5 @@
 package jpass.crypt.io;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.zip.GZIPOutputStream;
-
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
@@ -23,6 +7,11 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.zip.GZIPOutputStream;
 
 public class CryptOutputStream extends OutputStream {
     private final OutputStream output;
@@ -69,35 +58,5 @@ public class CryptOutputStream extends OutputStream {
     @Override
     public void close() throws IOException {
         output.close();
-    }
-    
-    public static void main(String[] args) {
-        try {
-            Path file = Files.createTempFile("ciphered-", ".txt");
-            @SuppressWarnings("SpellCheckingInspection")
-            char[] passwd = "tpsxuc9w".toCharArray();
-            try (
-                OutputStream output = Files.newOutputStream(file);
-                OutputStream crypt = new CryptOutputStream(output, passwd);
-                Writer writer = new OutputStreamWriter(crypt, StandardCharsets.UTF_8);
-                PrintWriter out = new PrintWriter(writer)
-            ) {
-                out.printf("%s%n", "Сара́тов — город на юго-востоке европейской части России, административный центр" +
-                        " Саратовской области и Саратовского района, в который не входит...");
-            }
-            try (
-                InputStream input = Files.newInputStream(file);
-                InputStream crypt = new CryptInputStream(input, passwd);
-                Reader reader = new InputStreamReader(crypt, StandardCharsets.UTF_8);
-                BufferedReader in = new BufferedReader(reader)
-            ) {
-                for (String line = in.readLine(); line != null; line = in.readLine()) {
-                    System.out.printf("%s", line);
-                }
-            }
-            Files.deleteIfExists(file);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
     }
 }

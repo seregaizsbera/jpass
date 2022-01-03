@@ -34,7 +34,6 @@ import javax.swing.text.TextAction;
 import java.io.Serial;
 
 public abstract class TextComponentAction extends TextAction {
-
     @Serial
     private static final long serialVersionUID = -2061559337477351379L;
 

@@ -1,6 +1,7 @@
 package jpass.ui;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JDialog;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
 

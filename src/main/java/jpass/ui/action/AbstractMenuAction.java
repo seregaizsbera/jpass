@@ -37,7 +37,6 @@ import java.io.Serial;
  * Class for handling menu actions.
  *
  * @author Gabor_Bata
- *
  */
 public abstract class AbstractMenuAction extends AbstractAction {
     @Serial

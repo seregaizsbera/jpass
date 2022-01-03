@@ -37,7 +37,6 @@ import jpass.ui.JPassFrame;
  * Listener for widow close.
  *
  * @author Gabor_Bata
- *
  */
 public class CloseListener extends WindowAdapter {
 
