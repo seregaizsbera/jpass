@@ -53,7 +53,6 @@ import jpass.ui.action.Callback;
  * Class for representing search panel. Search panel is hidden by default.
  *
  * @author Gabor_Bata
- *
  */
 public class SearchPanel extends JPanel implements ActionListener {
     @Serial

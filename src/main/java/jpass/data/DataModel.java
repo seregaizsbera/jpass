@@ -28,27 +28,22 @@
  */
 package jpass.data;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
 import jpass.xml.bind.Entries;
 import jpass.xml.bind.Entry;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Data model of the application data.
  *
  * @author Gabor_Bata
- *
  */
-public class DataModel implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -6064912973494236527L;
+public class DataModel {
     private static final DataModel instance = new DataModel();
     private Entries entries = new Entries();
     private String fileName = null;
-    private transient char[] password = null;
+    private char[] password = null;
     private boolean modified = false;
 
     private DataModel() {

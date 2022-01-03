@@ -42,7 +42,6 @@ import java.io.UncheckedIOException;
  * System clipboard related utility class.
  *
  * @author Gabor_Bata
- *
  */
 public final class ClipboardUtils {
 

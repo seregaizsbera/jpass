@@ -35,7 +35,6 @@ import java.io.Serial;
  * Exception if the processing of XML document fails.
  *
  * @author Gabor_Bata
- *
  */
 public class DocumentProcessException extends Exception {
     @Serial

@@ -28,21 +28,12 @@
  */
 package jpass.xml.converter;
 
-import org.xml.sax.SAXException;
-
-import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 
 /**
  * Class for conversion between JAXB objects and streams representing XMLs.
@@ -51,13 +42,12 @@ import java.io.UncheckedIOException;
  *
  * @param <T> the type of object to marshal/unmarshal
  */
+@SuppressWarnings("ClassCanBeRecord")
 public class JAXBConverter<T> {
     private final Class<T> documentClass;
-    private final Schema schema;
 
-    public JAXBConverter(Class<T> documentClass, String schemaLocation) {
+    public JAXBConverter(Class<T> documentClass) {
         this.documentClass = documentClass;
-        this.schema = getSchema(schemaLocation);
     }
 
     /**
@@ -68,10 +58,9 @@ public class JAXBConverter<T> {
      * @param formattedOutput formatting of the output XML
      * @throws JAXBException if any error occurred
      */
-    public void marshal(T document, OutputStream outputStream, Boolean formattedOutput) throws JAXBException {
+    public void marshal(T document, OutputStream outputStream, boolean formattedOutput) throws JAXBException {
         JAXBContext jc = JAXBContext.newInstance(this.documentClass);
         Marshaller m = jc.createMarshaller();
-        m.setSchema(this.schema);
         m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formattedOutput);
         m.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
         m.marshal(document, outputStream);
@@ -88,35 +77,6 @@ public class JAXBConverter<T> {
     public T unmarshal(InputStream inputStream) throws JAXBException {
         JAXBContext jc = JAXBContext.newInstance(this.documentClass);
         Unmarshaller u = jc.createUnmarshaller();
-        u.setSchema(this.schema);
         return (T) u.unmarshal(inputStream);
-    }
-
-    /**
-     * Gets schema from the class path.
-     *
-     * <p>
-     * If any error occurred during creating the schema object, the method silently returns
-     * {@code null}.</p>
-     *
-     * @param schemaLocation the path of the schema
-     * @return the schema
-     */
-    private Schema getSchema(String schemaLocation) {
-        Schema ret = null;
-        if (schemaLocation != null) {
-            try {
-                Source source = new StreamSource(this.getClass().getClassLoader().getResourceAsStream(schemaLocation));
-                SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                sf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                sf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                sf.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                sf.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-                ret = sf.newSchema(source);
-            } catch (SAXException e) {
-                throw new UncheckedIOException(new IOException(e));
-            }
-        }
-        return ret;
     }
 }

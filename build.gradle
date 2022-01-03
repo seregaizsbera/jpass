@@ -12,6 +12,7 @@ repositories.mavenCentral()
 
 dependencies({
     implementation("javax.xml.bind:jaxb-api:${jaxbApiVersion}")
+    implementation("javax.annotation:javax.annotation-api:${annotationApiVersion}")
     runtimeOnly("com.sun.xml.bind:jaxb-core:${jaxbCoreVersion}")
     runtimeOnly("com.sun.xml.bind:jaxb-impl:${jaxbImplVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${jupiterVersion}")

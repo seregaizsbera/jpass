@@ -45,7 +45,6 @@ import java.util.Random;
  * Dialog for generating random passwords.
  *
  * @author Gabor_Bata
- *
  */
 public final class GeneratePasswordDialog extends JDialog implements ActionListener {
     @Serial

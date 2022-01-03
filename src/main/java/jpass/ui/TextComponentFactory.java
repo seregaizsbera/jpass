@@ -39,7 +39,6 @@ import jpass.ui.action.TextComponentPopupListener;
  * Factory for creating text components with context menus.
  *
  * @author Gabor_Bata
- *
  */
 public final class TextComponentFactory {
 

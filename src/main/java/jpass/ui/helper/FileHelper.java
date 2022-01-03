@@ -48,7 +48,6 @@ import jpass.util.StringUtils;
  * Helper utils for file operations.
  *
  * @author Gabor_Bata
- *
  */
 public final class FileHelper {
 
@@ -274,7 +273,7 @@ public final class FileHelper {
                     parent.getModel().setPassword(password);
                     parent.getSearchPanel().setVisible(false);
                 } catch (DocumentProcessException e) {
-                    throw new IOException("An error occurred during the open operation:\n" + e.getMessage());
+                    throw new IOException(e.getMessage());
                 }
                 return null;
             }
@@ -345,7 +344,6 @@ public final class FileHelper {
             public boolean accept(File f) {
                 return f.isDirectory() || f.getName().toLowerCase().endsWith("." + extension);
             }
-
             @Override
             public String getDescription() {
                 return description;

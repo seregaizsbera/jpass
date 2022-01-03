@@ -13,7 +13,7 @@
   </xs:element>
   <xs:complexType name="entry">
     <xs:sequence>
-      <xs:element name="title" minOccurs="1">
+      <xs:element name="title">
         <xs:simpleType>
           <xs:restriction base="xs:string">
             <xs:pattern value=".*\S.*" />

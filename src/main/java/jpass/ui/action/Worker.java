@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
  * disabled, and a progress indicator is shown.
  *
  * @author Gabor_Bata
- *
  */
 public abstract class Worker extends SwingWorker<Void, Void> {
     /**

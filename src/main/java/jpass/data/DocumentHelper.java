@@ -49,7 +49,6 @@ import jpass.xml.converter.JAXBConverter;
  * Helper class for reading and writing (encrypted) XML documents.
  *
  * @author Gabor_Bata
- *
  */
 @SuppressWarnings("ClassCanBeRecord")
 public final class DocumentHelper {
@@ -67,8 +66,8 @@ public final class DocumentHelper {
     /**
      * Converter between JAXB objects and streams representing XMLs
      */
-    private static final JAXBConverter<Entries> CONVERTER = new JAXBConverter<>(Entries.class,
-            "resources/schemas/entries.xsd");
+    private static final JAXBConverter<Entries> CONVERTER = new JAXBConverter<>(Entries.class
+    );
 
     /**
      * Creates a DocumentHelper instance.

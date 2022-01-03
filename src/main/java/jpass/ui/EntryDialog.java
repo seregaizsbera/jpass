@@ -48,7 +48,7 @@ public class EntryDialog extends JDialog implements ActionListener {
 
     private final char originalEcho;
 
-    private Entry formData;
+    private transient Entry formData;
 
     private final boolean newEntry;
 

@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 
 /**
  * Class for loading configurations from {@code jpass.properties}.
- *
  */
 public final class Configuration {
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());

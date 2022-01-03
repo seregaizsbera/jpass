@@ -42,7 +42,6 @@ import jpass.ui.helper.EntryHelper;
  * Mouse listener for the entry title list.
  *
  * @author Gabor_Bata
- *
  */
 public class ListListener extends MouseAdapter {
 

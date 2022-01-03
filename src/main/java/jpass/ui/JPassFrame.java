@@ -26,7 +26,6 @@ import static jpass.ui.MessageDialog.showQuestionMessage;
  * The main frame for JPass.
  *
  * @author Gabor_Bata
- *
  */
 public final class JPassFrame extends JFrame {
     @Serial
