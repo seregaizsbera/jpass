@@ -39,7 +39,7 @@ public final class JPassFrame extends JFrame {
     private final SearchPanel searchPanel;
     private final JList<String> entryTitleList;
     private final DefaultListModel<String> entryTitleListModel;
-    private final DataModel model = DataModel.getInstance();
+    private final transient DataModel model = DataModel.getInstance();
     private final StatusPanel statusPanel;
     private volatile boolean processing = false;
 
